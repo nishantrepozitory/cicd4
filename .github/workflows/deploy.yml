@@ -19,6 +19,17 @@ jobs:
     - name: Set up Minikube
       uses: medyagh/setup-minikube@master
 
+    - name: Install Istio CLI
+      run: |
+        curl -L https://istio.io/downloadIstio | sh -
+        sudo mv istio-*/bin/istioctl /usr/local/bin/
+        istioctl version
+
+    - name: Install Istio in Minikube
+      run: |
+        istioctl install --set profile=demo -y
+        kubectl label namespace default istio-injection=enabled
+
     - name: Build and push Docker image
       run: |
         docker build -t nishantrepolocal/myapp:2.0.0 .
