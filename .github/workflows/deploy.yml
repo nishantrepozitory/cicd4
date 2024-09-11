@@ -41,13 +41,41 @@ jobs:
         kubectl apply -f ./deploy.yaml
         kubectl apply -f ./service.yaml
 
-    - name: Wait for deployment to complete
+    - name: Get Pod Logs
       run: |
-        kubectl rollout status deployment/myapp
+        kubectl get pods --selector=app=myapp
+        # POD_NAME=$(kubectl get pods -l app=myapp -o jsonpath='{.items[0].metadata.name}')
+        # kubectl logs $POD_NAME
 
-    - name: Test Service and Get URL
+    - name: Check Pod Status
       run: |
-        export INGRESS_HOST=$(minikube ip)
-        export INGRESS_PORT=$(kubectl get svc istio-ingressgateway -n istio-system -o jsonpath='{.spec.ports[?(@.port==80)].nodePort}')
-        export GATEWAY_URL=$INGRESS_HOST:$INGRESS_PORT
-        echo "Your service is accessible at: http://$GATEWAY_URL/"
+        kubectl get pods -o wide
+
+    - name: Describe Service
+      run: |
+        kubectl describe svc myapp
+
+    - name: Wait for Service to be Available
+      run: |
+        echo "Waiting for service 'myapp' to be available..."
+        kubectl wait --for=condition=available --timeout=60s svc/myapp
+
+    - name: Retrieve and Print Service URL
+      run: |
+        # Check if service is exposed via LoadBalancer
+        EXTERNAL_IP=$(kubectl get svc myapp -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null)
+        if [ -z "$EXTERNAL_IP" ]; then
+          # Fallback to NodePort if LoadBalancer is not available
+          NODE_PORT=$(kubectl get svc myapp -o jsonpath='{.spec.ports[0].nodePort}')
+          NODE_IP=$(minikube ip)
+          EXTERNAL_URL="http://$NODE_IP:$NODE_PORT"
+        else
+          EXTERNAL_URL="http://$EXTERNAL_IP"
+        fi
+
+        if [ -z "$EXTERNAL_URL" ]; then
+          echo "Service URL could not be determined."
+          exit 1
+        else
+          echo "Your service is accessible at: $EXTERNAL_URL/"
+        fi
