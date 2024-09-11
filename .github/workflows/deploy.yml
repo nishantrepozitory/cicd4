@@ -47,10 +47,6 @@ jobs:
         kubectl apply -f ./deploy.yaml
         kubectl apply -f ./service.yaml
 
-    - name: Desc deployment
-      run: |
-        kubectl describe deployment myapp
-
     - name: Get Event
       run: |
         kubectl get events --sort-by=.metadata.creationTimestamp
