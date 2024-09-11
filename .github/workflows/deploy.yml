@@ -30,10 +30,16 @@ jobs:
         istioctl install --set profile=demo -y
         kubectl label namespace default istio-injection=enabled
 
+    - name: Log in to Docker Hub
+      uses: docker/login-action@v2
+      with:
+        username: ${{ secrets.DOCKER_HUB_USERNAME }}
+        password: ${{ secrets.DOCKER_HUB_PAT }}
+
     - name: Build and push Docker image
       run: |
-        docker build -t nishantrepolocal/myapp:2.0.0 .
-        minikube image load nishantrepolocal/myapp:2.0.0
+        docker build -t nishantrepo/myapp:2.0.0 .
+        docker push nishantrepo/myapp:2.0.0
 
     - name: Deploy to Kubernetes
       run: |
@@ -41,11 +47,23 @@ jobs:
         kubectl apply -f ./deploy.yaml
         kubectl apply -f ./service.yaml
 
+    - name: Desc deployment
+      run: |
+        kubectl describe deployment myapp
+
+    - name: Get Event
+      run: |
+        kubectl get events --sort-by=.metadata.creationTimestamp
+
+    - name: Wait for Pods to be Created
+      run: |
+        echo "Waiting for pods to be created..."
+        kubectl wait --for=condition=ready pod --selector=app=myapp --timeout=180s
+
     - name: Get Pod Logs
       run: |
-        kubectl get pods --selector=app=myapp
-        # POD_NAME=$(kubectl get pods -l app=myapp -o jsonpath='{.items[0].metadata.name}')
-        # kubectl logs $POD_NAME
+        POD_NAME=$(kubectl get pods -l app=myapp -o jsonpath='{.items[0].metadata.name}')
+        kubectl logs $POD_NAME
 
     - name: Check Pod Status
       run: |
