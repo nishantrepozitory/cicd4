@@ -1,0 +1,22 @@
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: myapp
+spec:
+  hosts:
+  - "*"
+  gateways:
+  - istio-system/istio-ingressgateway
+  http:
+  - match:
+    - headers:
+        service-router:
+          exact: "myapp-develop"
+    route:
+    - destination:
+        host: myapp
+        subset: develop
+  - route:
+    - destination:
+        host: myapp
+        subset: stable
