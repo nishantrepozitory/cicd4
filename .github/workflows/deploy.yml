@@ -14,48 +14,39 @@ jobs:
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
 
     - name: Set up Minikube
-      uses: medyagh/setup-minikube@master
+      uses: medyagh/setup-minikube@latest
 
-    - name: Install Istio CLI
+    # - name: Install Istio CLI
+    #   run: |
+    #     curl -L https://istio.io/downloadIstio | sh -
+    #     sudo mv istio-*/bin/istioctl /usr/local/bin/
+    #     istioctl version
+
+    # - name: Install Istio in Minikube
+    #   run: |
+    #     istioctl install --set profile=demo -y
+    #     kubectl label namespace default istio-injection=enabled
+    #     sleep 60
+
+    - name: Build image
       run: |
-        curl -L https://istio.io/downloadIstio | sh -
-        sudo mv istio-*/bin/istioctl /usr/local/bin/
-        istioctl version
+        docker build -t nishantrepo/goapp:2.0.0 .
+        docker push nishantrepo/goapp:2.0.0
 
-    - name: Install Istio in Minikube
-      run: |
-        istioctl install --set profile=demo -y
-        kubectl label namespace default istio-injection=enabled
-
-    - name: Log in to Docker Hub
-      uses: docker/login-action@v2
-      with:
-        username: ${{ secrets.DOCKER_HUB_USERNAME }}
-        password: ${{ secrets.DOCKER_HUB_PAT }}
-
-    - name: Build and push Docker image
-      run: |
-        docker build -t nishantrepo/myapp:2.0.0 .
-        docker push nishantrepo/myapp:2.0.0
 
     - name: Deploy to Kubernetes
       run: |
         kubectl config set-context minikube
         kubectl apply -f ./deploy.yaml
         kubectl apply -f ./service.yaml
-        sleep 120
+        kubectl wait --for=condition=ready pod -l app=myapp --timeout=600s
 
     - name: Get Event
       run: |
         kubectl get events --sort-by=.metadata.creationTimestamp
-
-    - name: Wait for Pods to be Created
-      run: |
-        echo "Waiting for pods to be created..."
-        kubectl wait --for=condition=ready pod --selector=app=myapp --timeout=180s
 
     - name: Get Pod Logs
       run: |
