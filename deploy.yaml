@@ -37,30 +37,30 @@ spec:
     - "*" # Allow all hosts
 
 
-apiVersion: networking.istio.io/v1beta1
-kind: VirtualService
-metadata:
-  name: go-api-vs-${VERSION} # Dynamic VirtualService name based on version
-spec:
-  hosts:
-  - "*" # Accept traffic from all hosts
-  gateways:
-  - go-api-gateway
-  http:
-  - match:
-    - headers:
-        service-router:
-          exact: "${VERSION}" # Match based on dynamic version
-    route:
-    - destination:
-        host: myapp.default.svc.cluster.local # Default route
-        port:
-          number: 8080
-  - match:
-    - uri:
-        prefix: "/" # Fallback route for non-versioned traffic
-    route:
-    - destination:
-        host: myapp.default.svc.cluster.local # Default route
-        port:
-          number: 8080
+# apiVersion: networking.istio.io/v1beta1
+# kind: VirtualService
+# metadata:
+#   name: go-api-vs-${VERSION} # Dynamic VirtualService name based on version
+# spec:
+#   hosts:
+#   - "*" # Accept traffic from all hosts
+#   gateways:
+#   - go-api-gateway
+#   http:
+#   - match:
+#     - headers:
+#         service-router:
+#           exact: "${VERSION}" # Match based on dynamic version
+#     route:
+#     - destination:
+#         host: myapp.default.svc.cluster.local # Default route
+#         port:
+#           number: 8080
+#   - match:
+#     - uri:
+#         prefix: "/" # Fallback route for non-versioned traffic
+#     route:
+#     - destination:
+#         host: myapp.default.svc.cluster.local # Default route
+#         port:
+#           number: 8080

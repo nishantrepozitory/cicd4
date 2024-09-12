@@ -56,7 +56,6 @@ jobs:
         yq e '.metadata.name = "myapp-" + env(VERSION)' -i ./deploy.yaml
         # yq e '.spec.template.spec.containers[0].image = "***/goapp:" + env(VERSION)' -i ./deploy.yaml
         yq e '.metadata.name = "go-api-vs-" + env(VERSION)' -i ./service.yaml
-        yq e '.spec.http[0].match[0].headers.service-router.exact = env(VERSION)' -i ./service.yaml
 
         kubectl apply -f ./deploy.yaml
         kubectl apply -f ./service.yaml
@@ -79,4 +78,28 @@ jobs:
           exit 1
         else
           echo "Your service is accessible at: $EXTERNAL_URL/"
+        fi
+
+    - name: Install ngrok
+      run: |
+        curl -s https://ngrok-agent.s3.amazonaws.com/ngrok.asc | sudo tee /etc/apt/trusted.gpg.d/ngrok.asc >/dev/null &&
+        echo "deb https://ngrok-agent.s3.amazonaws.com buster main" | sudo tee /etc/apt/sources.list.d/ngrok.list &&
+        sudo apt update && sudo apt install ngrok
+
+    - name: Login to ngrok
+      run: |
+        ngrok config add-authtoken ${{ secrets.NGROK_AUTH_TOKEN }}
+
+    - name: Expose Minikube service using ngrok
+      run: |
+        NODE_PORT=$(kubectl get svc myapp-${VERSION} -o jsonpath='{.spec.ports[0].nodePort}')
+        echo "Starting ngrok on port $NODE_PORT"
+        nohup ngrok http $NODE_PORT --log=stdout > ngrok.log &
+        sleep 10 # Wait for ngrok to start
+        NGROK_URL=$(curl -s http://localhost:4040/api/tunnels | jq -r '.tunnels[0].public_url')
+        if [ -z "$NGROK_URL" ]; then
+          echo "ngrok URL could not be retrieved."
+          exit 1
+        else
+          echo "Your ngrok URL is: $NGROK_URL"
         fi
