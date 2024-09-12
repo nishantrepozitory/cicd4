@@ -1,14 +1,14 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: myapp-${VERSION} # Dynamic name using branch version
+  name: myapp-${VERSION}
   labels:
-    app: myapp # Use a static label for Kubernetes selectors
+    app: myapp
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: myapp # Static label for selector
+      app: myapp
   template:
     metadata:
       labels:
@@ -16,12 +16,12 @@ spec:
     spec:
       containers:
       - name: myapp
-        image: nishantrepo/goapp:${VERSION} # Dynamically generated Docker image
+        image: nishantrepo/goapp:${VERSION}
         ports:
         - containerPort: 8080
 
-
-apiVersion: networking.istio.io/v1beta1
+---
+apiVersion: networking.istio.io/v1alpha3
 kind: Gateway
 metadata:
   name: go-api-gateway
@@ -34,33 +34,33 @@ spec:
       name: http
       protocol: HTTP
     hosts:
-    - "*" # Allow all hosts
+    - "*"
 
-
-apiVersion: networking.istio.io/v1beta1
+---
+apiVersion: networking.istio.io/v1alpha3
 kind: VirtualService
 metadata:
-  name: go-api-vs-${VERSION} # Dynamic VirtualService name based on version
+  name: myapp
 spec:
   hosts:
-  - "*" # Accept traffic from all hosts
+  - "*"
   gateways:
   - go-api-gateway
   http:
   - match:
     - headers:
         service-router:
-          exact: "${VERSION}" # Match based on dynamic version
+          exact: "${VERSION}"
     route:
     - destination:
-        host: myapp.default.svc.cluster.local # Default route
+        host: myapp.default.svc.cluster.local
         port:
           number: 8080
   - match:
     - uri:
-        prefix: "/" # Fallback route for non-versioned traffic
+        prefix: "/"
     route:
     - destination:
-        host: myapp.default.svc.cluster.local # Default route
+        host: myapp.default.svc.cluster.local
         port:
           number: 8080
