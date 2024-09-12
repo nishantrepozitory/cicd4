@@ -1,11 +1,11 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: myapp
+  name: myapp-${VERSION} # Use versioned service name to match deployment
 spec:
   selector:
-    app: myapp
+    app: myapp-${VERSION} # Select pods based on version-specific label
   ports:
-    - protocol: TCP
-      port: 80
-      targetPort: 8080
+  - protocol: TCP
+    port: 80
+    targetPort: 8080 # Target the port used by the container

@@ -37,24 +37,37 @@ jobs:
 
     - name: Build image
       run: |
-        docker build -t nishantrepo/goapp:2.0.0 .
-        docker push nishantrepo/goapp:2.0.0
-
+        BRANCH_NAME=${GITHUB_SHA}
+        VERSION="develop-${BRANCH_NAME}"
+        echo "Building Docker image with tag: $VERSION"
+        docker build -t nishantrepo/goapp:$VERSION .
+        docker push nishantrepo/goapp:$VERSION
 
     - name: Deploy to Kubernetes
+      env:
+        VERSION: develop-${{ github.sha }}
       run: |
+        BRANCH_NAME=$GITHUB_SHA
+
+        VERSION="develop-${BRANCH_NAME}"
+
         kubectl config set-context minikube
+
+        yq e '.metadata.name = "myapp-" + env(VERSION)' -i ./deploy.yaml
+        yq e '.spec.template.spec.containers[0].image = "***/goapp:" + env(VERSION)' -i ./deploy.yaml
+        yq e '.metadata.name = "go-api-vs-" + env(VERSION)' -i ./service.yaml
+        yq e '.spec.http[0].match[0].headers.service-router.exact = env(VERSION)' -i ./service.yaml
+
         kubectl apply -f ./deploy.yaml
         kubectl apply -f ./service.yaml
-        kubectl wait --for=condition=ready pod -l app=myapp --timeout=600s
+
+        kubectl wait --for=condition=ready pod -l app=myapp-${VERSION} --timeout=600s
 
     - name: Retrieve and Print Service URL
       run: |
-        # Check if service is exposed via LoadBalancer
-        EXTERNAL_IP=$(kubectl get svc myapp -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null)
+        EXTERNAL_IP=$(kubectl get svc myapp-${VERSION} -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null)
         if [ -z "$EXTERNAL_IP" ]; then
-          # Fallback to NodePort if LoadBalancer is not available
-          NODE_PORT=$(kubectl get svc myapp -o jsonpath='{.spec.ports[0].nodePort}')
+          NODE_PORT=$(kubectl get svc myapp-${VERSION} -o jsonpath='{.spec.ports[0].nodePort}')
           NODE_IP=$(minikube ip)
           EXTERNAL_URL="http://$NODE_IP:$NODE_PORT"
         else
