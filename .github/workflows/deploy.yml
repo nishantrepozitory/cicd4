@@ -54,7 +54,7 @@ jobs:
         kubectl config set-context minikube
 
         yq e '.metadata.name = "myapp-" + env(VERSION)' -i ./deploy.yaml
-        yq e '.spec.template.spec.containers[0].image = "***/goapp:" + env(VERSION)' -i ./deploy.yaml
+        # yq e '.spec.template.spec.containers[0].image = "***/goapp:" + env(VERSION)' -i ./deploy.yaml
         yq e '.metadata.name = "go-api-vs-" + env(VERSION)' -i ./service.yaml
         yq e '.spec.http[0].match[0].headers.service-router.exact = env(VERSION)' -i ./service.yaml
 

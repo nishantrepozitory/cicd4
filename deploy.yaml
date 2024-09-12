@@ -48,15 +48,15 @@ spec:
   - go-api-gateway
   http:
   - match:
-    #   - headers:
-    #       service-router:
-    #         exact: "${VERSION}" # Match based on dynamic version
-    #   route:
-    #   - destination:
-    #       host: myapp.default.svc.cluster.local # Default route
-    #       port:
-    #         number: 8080
-    # - match:
+    - headers:
+        service-router:
+          exact: "${VERSION}" # Match based on dynamic version
+    route:
+    - destination:
+        host: myapp.default.svc.cluster.local # Default route
+        port:
+          number: 8080
+  - match:
     - uri:
         prefix: "/" # Fallback route for non-versioned traffic
     route:
