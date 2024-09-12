@@ -55,11 +55,11 @@ jobs:
 
         yq e '.metadata.name = "myapp-" + env(VERSION)' -i ./deploy.yaml
         # yq e '.spec.template.spec.containers[0].image = "***/goapp:" + env(VERSION)' -i ./deploy.yaml
-        yq e '.metadata.name = "go-api-vs-" + env(VERSION)' -i ./service.yaml
 
         kubectl apply -f ./deploy.yaml
         kubectl apply -f ./service.yaml
 
+        kubectl get pods
         kubectl wait --for=condition=ready pod -l app=myapp-${VERSION} --timeout=600s
 
     - name: Retrieve and Print Service URL
