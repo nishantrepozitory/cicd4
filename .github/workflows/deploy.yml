@@ -67,11 +67,6 @@ jobs:
       run: |
         kubectl describe svc myapp
 
-    - name: Wait for Service to be Available
-      run: |
-        echo "Waiting for service 'myapp' to be available..."
-        kubectl wait --for=condition=available --timeout=60s svc/myapp
-
     - name: Retrieve and Print Service URL
       run: |
         # Check if service is exposed via LoadBalancer
