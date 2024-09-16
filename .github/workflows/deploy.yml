@@ -37,7 +37,7 @@ jobs:
 
     - name: Build image
       run: |
-        BRANCH_NAME=${GITHUB_SHA}
+        BRANCH_NAME=$GITHUB_REF_NAME
         VERSION="develop-${BRANCH_NAME}"
         echo "Building Docker image with tag: $VERSION"
         docker build -t nishantrepo/goapp:$VERSION .
@@ -47,7 +47,7 @@ jobs:
       env:
         VERSION: develop-${{ github.sha }}
       run: |
-        BRANCH_NAME=$GITHUB_SHA
+        BRANCH_NAME=$GITHUB_REF_NAME
 
         VERSION="develop-${BRANCH_NAME}"
 
