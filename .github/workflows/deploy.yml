@@ -57,11 +57,11 @@ jobs:
 
         kubectl apply -f ./deploy.yaml
         kubectl apply -f ./service.yaml
-
-        kubectl wait --for=condition=ready pod -l app=myapp-${VERSION} --timeout=600s
+        sleep 60s
 
     - name: Retrieve and Print Service URL
       run: |
+        VERSION=$GITHUB_REF_NAME
         EXTERNAL_IP=$(kubectl get svc myapp-${VERSION} -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null)
         if [ -z "$EXTERNAL_IP" ]; then
           NODE_PORT=$(kubectl get svc myapp-${VERSION} -o jsonpath='{.spec.ports[0].nodePort}')
@@ -90,6 +90,7 @@ jobs:
 
     - name: Expose Minikube service using ngrok
       run: |
+        VERSION=$GITHUB_REF_NAME
         NODE_PORT=$(kubectl get svc myapp-${VERSION} -o jsonpath='{.spec.ports[0].nodePort}')
         echo "Starting ngrok on port $NODE_PORT"
         nohup ngrok http $NODE_PORT --log=stdout > ngrok.log &
