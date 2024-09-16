@@ -59,8 +59,9 @@ jobs:
         kubectl apply -f ./deploy.yaml
         kubectl apply -f ./service.yaml
 
+        sleep 60
         kubectl get pods
-        echo "Building Docker image with tag: myapp-$VERSION"
+        kubectl logs myapp-${VERSION}
         kubectl wait --for=condition=ready pod -l app=myapp-${VERSION} --timeout=600s
 
     - name: Retrieve and Print Service URL
