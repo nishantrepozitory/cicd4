@@ -60,8 +60,9 @@ jobs:
 
         kubectl apply -f ./deploy.yaml
         kubectl apply -f ./service.yaml
-        sleep=60
+        sleep=60s
 
+        kubectl get pods
         kubectl logs -l app=myapp-${VERSION}
 
         echo "Fetching all pod logs in the current namespace:"
