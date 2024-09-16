@@ -37,8 +37,7 @@ jobs:
 
     - name: Build image
       run: |
-        BRANCH_NAME=$GITHUB_REF_NAME
-        VERSION=$BRANCH_NAME
+        VERSION=$GITHUB_REF_NAME
         echo "Building Docker image with tag: nishantrepo/goapp:${VERSION}"
         docker build -t nishantrepo/goapp:$VERSION .
         docker push nishantrepo/goapp:$VERSION
@@ -47,25 +46,23 @@ jobs:
       env:
         VERSION: ${{ github.ref_name }}
       run: |
-        BRANCH_NAME=$GITHUB_REF_NAME
-
-        VERSION=$BRANCH_NAME
+        VERSION=$GITHUB_REF_NAME
 
         kubectl config set-context minikube
 
         yq e '.metadata.name = "myapp-" + env(VERSION)' -i ./deploy.yaml
-        # yq e '.spec.template.spec.containers[0].image = "nishantrepo/goapp:" + env(VERSION)' -i ./deploy.yaml
+        yq e '.spec.template.spec.containers[0].image = "nishantrepo/goapp:" + env(VERSION)' -i ./deploy.yaml
 
         echo "Deploying to Kubernetes with version ${VERSION}"
 
         kubectl apply -f ./deploy.yaml
         kubectl apply -f ./service.yaml
-        sleep 120
+        sleep 60
 
         kubectl get pods
         kubectl logs -l app=myapp-${VERSION}
 
-        echo "Fetching all pod logs in the current namespace:"
+        echo "Fetching all pod logs in the current namespace: ${env(VERSION)}"
         for pod in $(kubectl get pods --no-headers -o custom-columns=":metadata.name"); do
             echo "Logs for pod: $pod"
             kubectl logs $pod
