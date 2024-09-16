@@ -57,16 +57,6 @@ jobs:
 
         kubectl apply -f ./deploy.yaml
         kubectl apply -f ./service.yaml
-        sleep 60
-
-        kubectl get pods
-        kubectl logs -l app=myapp-${VERSION}
-
-        echo "Fetching all pod logs in the current namespace: ${env(VERSION)}"
-        for pod in $(kubectl get pods --no-headers -o custom-columns=":metadata.name"); do
-            echo "Logs for pod: $pod"
-            kubectl logs $pod
-        done
 
         kubectl wait --for=condition=ready pod -l app=myapp-${VERSION} --timeout=600s
 
