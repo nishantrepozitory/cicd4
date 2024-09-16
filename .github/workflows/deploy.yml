@@ -60,7 +60,7 @@ jobs:
 
         kubectl apply -f ./deploy.yaml
         kubectl apply -f ./service.yaml
-        sleep=60s
+        sleep=120s
 
         kubectl get pods
         kubectl logs -l app=myapp-${VERSION}
