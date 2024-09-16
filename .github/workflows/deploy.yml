@@ -38,18 +38,18 @@ jobs:
     - name: Build image
       run: |
         BRANCH_NAME=$GITHUB_REF_NAME
-        VERSION="develop-${BRANCH_NAME}"
+        VERSION=$BRANCH_NAME
         echo "Building Docker image with tag: $VERSION"
         docker build -t nishantrepo/goapp:$VERSION .
         docker push nishantrepo/goapp:$VERSION
 
     - name: Deploy to Kubernetes
       env:
-        VERSION: develop-${{ github.sha }}
+        VERSION: ${{ github.ref_name }}
       run: |
         BRANCH_NAME=$GITHUB_REF_NAME
 
-        VERSION="develop-${BRANCH_NAME}"
+        VERSION=$BRANCH_NAME
 
         kubectl config set-context minikube
 
