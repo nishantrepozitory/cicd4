@@ -50,8 +50,8 @@ jobs:
 
         kubectl config set-context minikube
 
-        yq e '.metadata.name = "myapp-" + env(VERSION)' -i ./deploy.yaml
-        yq e '.spec.template.spec.containers[0].image = "nishantrepo/goapp:" + env(VERSION)' -i ./deploy.yaml
+        yq e 'select(.kind == "Deployment") | .metadata.name = "myapp-" + env(VERSION)' -i ./deploy.yaml
+        yq e 'select(.kind == "Deployment") | .spec.template.spec.containers[0].image = "nishantrepo/goapp:" + env(VERSION)' -i ./deploy.yaml
 
         echo "Deploying to Kubernetes with version ${VERSION}"
 
