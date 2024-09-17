@@ -12,22 +12,27 @@ jobs:
   build:
     runs-on: self-hosted
 
+    strategy:
+      matrix:
+        job: [build, istio]
+
     steps:
+    - name: Cache Docker layers
+      uses: actions/cache@v3
+      with:
+        path: /tmp/.buildx-cache
+        key: ${{ runner.os }}-docker-${{ github.sha }}
+        restore-keys: |
+          ${{ runner.os }}-docker-
+
     - name: Checkout code
       uses: actions/checkout@v4
 
     - name: Set up Minikube
       uses: medyagh/setup-minikube@latest
-
-    - name: Install Istio CLI
-      run: |
-        curl -L https://istio.io/downloadIstio | sh -
-        sudo mv istio-*/bin/istioctl /usr/local/bin/
-
-    - name: Install Istio in Minikube
-      run: |
-        istioctl install --set profile=demo -y
-        kubectl label namespace default istio-injection=enabled
+      with:
+        cpus: 4
+        memory: 8192
 
     - name: Login to Docker Hub
       uses: docker/login-action@v2
@@ -35,19 +40,25 @@ jobs:
         username: ${{ secrets.DOCKER_HUB_USERNAME }}
         password: ${{ secrets.DOCKER_HUB_PAT }}
 
-    - name: Build image
+    - name: Build Image
+      if: matrix.job == 'build'
       run: |
-        VERSION=$GITHUB_REF_NAME
-        echo "Building Docker image with tag: nishantrepo/goapp:${VERSION}"
-        docker build -t nishantrepo/goapp:$VERSION .
+        VERSION=${{ github.ref_name }}
+        DOCKER_BUILDKIT=1 docker build -t nishantrepo/goapp:$VERSION .
         docker push nishantrepo/goapp:$VERSION
+
+    - name: Set up Istio
+      if: matrix.job == 'istio'
+      run: |
+        curl -L https://istio.io/downloadIstio | sh -
+        sudo mv istio-*/bin/istioctl /usr/local/bin/
+        istioctl install --set profile=demo -y
+        kubectl label namespace default istio-injection=enabled
 
     - name: Deploy to Kubernetes
       env:
         VERSION: ${{ github.ref_name }}
       run: |
-        VERSION=$GITHUB_REF_NAME
-
         kubectl config set-context minikube
 
         yq e 'select(.kind == "Deployment") | .metadata.name = "myapp-" + env(VERSION)' -i ./deploy.yaml
@@ -57,11 +68,8 @@ jobs:
 
         kubectl apply -f ./deploy.yaml
         kubectl apply -f ./service.yaml
-        sleep 60
 
-        kubectl get pods
-
-        kubectl wait --for=condition=ready pod -l app=myapp --timeout=600s
+        kubectl wait --for=condition=available --timeout=60s deployment/myapp-${VERSION}
 
     - name: Retrieve and Print Service URL
       run: |
