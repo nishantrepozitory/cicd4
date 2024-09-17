@@ -61,7 +61,7 @@ jobs:
 
         kubectl get pods
 
-        kubectl wait --for=condition=ready pod -l app=myapp-${VERSION} --timeout=600s
+        kubectl wait --for=condition=ready pod -l app=myapp --timeout=600s
 
     - name: Retrieve and Print Service URL
       run: |
