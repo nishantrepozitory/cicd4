@@ -24,21 +24,32 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Set up Minikube
-      uses: medyagh/setup-minikube@latest
+    - name: Cache Minikube
+      uses: actions/cache@v3
       with:
-        cpus: 5
-        memory: 7680
+        path: ~/.minikube
+        key: minikube-${{ runner.os }}-${{ github.sha }}
+        restore-keys: |
+          minikube-${{ runner.os }}-
 
     - name: Install Istio CLI
       run: |
-        curl -L https://istio.io/downloadIstio | sh -
-        sudo mv istio-*/bin/istioctl /usr/local/bin/
+        if ! command -v istioctl &> /dev/null; then
+          curl -L https://istio.io/downloadIstio | sh -
+          sudo mv istio-*/bin/istioctl /usr/local/bin/
+        else
+          echo "Istio CLI already installed."
+        fi
+      continue-on-error: true
 
     - name: Install Istio in Minikube
       run: |
-        istioctl install --set profile=demo -y
-        kubectl label namespace default istio-injection=enabled
+        if ! kubectl get namespace istio-system &> /dev/null; then
+          istioctl install --set profile=demo -y
+          kubectl label namespace default istio-injection=enabled --overwrite
+        else
+          echo "Istio already installed."
+        fi
 
     - name: Login to Docker Hub
       uses: docker/login-action@v2
@@ -49,63 +60,64 @@ jobs:
     - name: Build Image
       run: |
         VERSION=${{ github.ref_name }}
-        DOCKER_BUILDKIT=1 docker build -t nishantrepo/goapp:$VERSION .
-        docker push nishantrepo/goapp:$VERSION
+        docker buildx create --use
+        docker buildx build --cache-from=type=local,src=/tmp/.buildx-cache \
+          --cache-to=type=local,dest=/tmp/.buildx-cache-new \
+          -t nishantrepo/goapp:$VERSION --push .
+        mv /tmp/.buildx-cache-new /tmp/.buildx-cache
 
     - name: Deploy to Kubernetes
       env:
         VERSION: ${{ github.ref_name }}
       run: |
         kubectl config set-context minikube
-
         yq e 'select(.kind == "Deployment") | .metadata.name = "myapp-" + env(VERSION)' -i ./deploy.yaml
         yq e 'select(.kind == "Deployment") | .spec.template.spec.containers[0].image = "nishantrepo/goapp:" + env(VERSION)' -i ./deploy.yaml
 
         echo "Deploying to Kubernetes with version ${VERSION}"
 
-        kubectl apply -f ./deploy.yaml
-        kubectl apply -f ./service.yaml
-
+        kubectl apply -f ./deploy.yaml -f ./service.yaml
         kubectl wait --for=condition=available --timeout=60s deployment/myapp-${VERSION}
 
-    - name: Retrieve and Print Service URL
-      run: |
-        EXTERNAL_IP=$(kubectl get svc myapp-${VERSION} -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null)
-        if [ -z "$EXTERNAL_IP" ]; then
+
+      - name: Retrieve and Print Service URL
+        run: |
+          EXTERNAL_IP=$(kubectl get svc myapp-${VERSION} -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null)
+          if [ -z "$EXTERNAL_IP" ]; then
+            NODE_PORT=$(kubectl get svc myapp-${VERSION} -o jsonpath='{.spec.ports[0].nodePort}')
+            NODE_IP=$(minikube ip)
+            EXTERNAL_URL="http://$NODE_IP:$NODE_PORT"
+          else
+            EXTERNAL_URL="http://$EXTERNAL_IP"
+          fi
+
+          if [ -z "$EXTERNAL_URL" ]; then
+            echo "Service URL could not be determined."
+            exit 1
+          else
+            echo "Your service is accessible at: $EXTERNAL_URL/"
+          fi
+
+      - name: Install ngrok
+        run: |
+          curl -s https://ngrok-agent.s3.amazonaws.com/ngrok.asc | sudo tee /etc/apt/trusted.gpg.d/ngrok.asc >/dev/null &&
+          echo "deb https://ngrok-agent.s3.amazonaws.com buster main" | sudo tee /etc/apt/sources.list.d/ngrok.list &&
+          sudo apt update && sudo apt install ngrok
+
+      - name: Login to ngrok
+        run: |
+          ngrok config add-authtoken ${{ secrets.NGROK_AUTH_TOKEN }}
+
+      - name: Expose Minikube service using ngrok
+        run: |
           NODE_PORT=$(kubectl get svc myapp-${VERSION} -o jsonpath='{.spec.ports[0].nodePort}')
-          NODE_IP=$(minikube ip)
-          EXTERNAL_URL="http://$NODE_IP:$NODE_PORT"
-        else
-          EXTERNAL_URL="http://$EXTERNAL_IP"
-        fi
-
-        if [ -z "$EXTERNAL_URL" ]; then
-          echo "Service URL could not be determined."
-          exit 1
-        else
-          echo "Your service is accessible at: $EXTERNAL_URL/"
-        fi
-
-    - name: Install ngrok
-      run: |
-        curl -s https://ngrok-agent.s3.amazonaws.com/ngrok.asc | sudo tee /etc/apt/trusted.gpg.d/ngrok.asc >/dev/null &&
-        echo "deb https://ngrok-agent.s3.amazonaws.com buster main" | sudo tee /etc/apt/sources.list.d/ngrok.list &&
-        sudo apt update && sudo apt install ngrok
-
-    - name: Login to ngrok
-      run: |
-        ngrok config add-authtoken ${{ secrets.NGROK_AUTH_TOKEN }}
-
-    - name: Expose Minikube service using ngrok
-      run: |
-        NODE_PORT=$(kubectl get svc myapp-${VERSION} -o jsonpath='{.spec.ports[0].nodePort}')
-        echo "Starting ngrok on port $NODE_PORT"
-        nohup ngrok http $NODE_PORT --log=stdout > ngrok.log &
-        sleep 10 # Wait for ngrok to start
-        NGROK_URL=$(curl -s http://localhost:4040/api/tunnels | jq -r '.tunnels[0].public_url')
-        if [ -z "$NGROK_URL" ]; then
-          echo "ngrok URL could not be retrieved."
-          exit 1
-        else
-          echo "Your ngrok URL is: $NGROK_URL"
-        fi
+          echo "Starting ngrok on port $NODE_PORT"
+          nohup ngrok http $NODE_PORT --log=stdout > ngrok.log &
+          sleep 10 # Wait for ngrok to start
+          NGROK_URL=$(curl -s http://localhost:4040/api/tunnels | jq -r '.tunnels[0].public_url')
+          if [ -z "$NGROK_URL" ]; then
+            echo "ngrok URL could not be retrieved."
+            exit 1
+          else
+            echo "Your ngrok URL is: $NGROK_URL"
+          fi
