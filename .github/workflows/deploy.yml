@@ -26,13 +26,19 @@ jobs:
         mode: check
         environment: develop
 
-    - name: Wait if Lock is Held (with 3 retries)
+    - name: Check if Lock is Set (with retries)
       if: ${{ steps.check_lock.outputs.locked == 'true' }}
       run: |
         retry_count=0
         while [[ ${{ steps.check_lock.outputs.locked }} == 'true' ]] && (( retry_count < 3 )); do
-          echo "Lock is still held. Retrying in 10 minutes... ${retry_count}"
-          sleep 70
+          # Call the `github/lock` action here (properly indented)
+          - uses: github/lock@v2.3.0
+            id: check_lock
+            with:
+              mode: check
+              environment: develop
+
+          sleep 20  # Wait 20 seconds between checks
           retry_count=$((retry_count + 1))
         done
 
