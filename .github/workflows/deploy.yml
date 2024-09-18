@@ -66,6 +66,9 @@ jobs:
         VERSION: ${{ github.ref_name }}
       run: |
         kubectl config use-context minikube
+        IS_LOCKED=$(yq eval '.metadata.annotations.custom/locked' ./deploy.yaml)
+        echo "IS_LOCKED:=======> ${IS_LOCKED}"
+
         yq eval 'select(.kind == "Deployment").metadata.name = "myapp-" + env(VERSION)' -i ./deploy.yaml
         yq eval 'select(.kind == "Deployment").spec.template.spec.containers[0].image = "nishantrepo/goapp:" + env(VERSION)' -i ./deploy.yaml
 
