@@ -18,14 +18,30 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Acquire lock
-      uses: github/lock@v1
-      id: lock
+      # Step 1: Check if a lock is set
+    - name: Check if Lock is Set
+      uses: github/lock@v2.3.0
+      id: check_lock
       with:
-        # This lock will prevent other jobs from running simultaneously
-        key: deploy-lock
-        # If the lock is already taken, wait for up to 10 minutes before failing
-        timeout: 600
+        mode: check
+        environment: ${{ github.event.inputs.environment }}
+
+    # Step 2: Wait for 10 minutes if lock is held
+    - name: Wait if Lock is Held
+      if: ${{ steps.check_lock.outputs.locked == 'true' }}
+      run: |
+        echo "Lock is currently held by another branch. Waiting for 10 minutes..."
+        sleep 600
+
+    # Step 3: Try to lock after waiting (or proceed if no lock is set)
+    - name: Set Lock for Current Branch
+      uses: github/lock@v2.3.0
+      id: set_lock
+      with:
+        mode: lock
+        reason: "Deployment by ${{ github.actor }} on branch ${{ github.ref_name }}"
+        environment: ${{ github.event.inputs.environment }}
+
 
     # - name: Set up Docker Buildx
     #   uses: docker/setup-buildx-action@v2
