@@ -13,16 +13,19 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Cache Docker layers
-      uses: actions/cache@v3
-      with:
-        path: /tmp/.buildx-cache
-        key: ${{ runner.os }}-docker-${{ github.sha }}
-        restore-keys: |
-          ${{ runner.os }}-docker-
-
     - name: Checkout code
       uses: actions/checkout@v4
+
+    # - name: Set up Docker Buildx
+    #   uses: docker/setup-buildx-action@v2
+
+    # - name: Cache Docker layers
+    #   uses: actions/cache@v3
+    #   with:
+    #     path: /tmp/.buildx-cache
+    #     key: ${{ runner.os }}-docker-${{ github.sha }}
+    #     restore-keys: |
+    #       ${{ runner.os }}-docker-
 
     - name: Set up Minikube
       uses: medyagh/setup-minikube@latest
@@ -35,7 +38,6 @@ jobs:
         else
           echo "Istio CLI already installed."
         fi
-      continue-on-error: true
 
     - name: Install Istio in Minikube
       run: |
@@ -46,20 +48,19 @@ jobs:
           echo "Istio already installed."
         fi
 
-    - name: Login to Docker Hub
-      uses: docker/login-action@v2
-      with:
-        username: ${{ secrets.DOCKER_HUB_USERNAME }}
-        password: ${{ secrets.DOCKER_HUB_PAT }}
+    # - name: Login to Docker Hub
+    #   uses: docker/login-action@v2
+    #   with:
+    #     username: ${{ secrets.DOCKER_HUB_USERNAME }}
+    #     password: ${{ secrets.DOCKER_HUB_PAT }}
 
-    - name: Build Image
-      run: |
-        VERSION=${{ github.ref_name }}
-        docker buildx create --use
-        docker buildx build --cache-from=type=local,src=/tmp/.buildx-cache \
-          --cache-to=type=local,dest=/tmp/.buildx-cache-new \
-          -t nishantrepo/goapp:$VERSION --push .
-        mv /tmp/.buildx-cache-new /tmp/.buildx-cache
+    # - name: Build Image
+    #   run: |
+    #     VERSION=${{ github.ref_name }}
+    #     docker buildx build --cache-from=type=local,src=/tmp/.buildx-cache \
+    #       --cache-to=type=local,dest=/tmp/.buildx-cache-new \
+    #       -t nishantrepo/goapp:$VERSION --push .
+    #     mv /tmp/.buildx-cache-new /tmp/.buildx-cache
 
     - name: Generate Random Lock Value
       id: generate_lock
@@ -77,9 +78,10 @@ jobs:
       run: |
         kubectl config use-context minikube
         IS_LOCKED=$(yq eval 'select(.kind == "Deployment").metadata.annotations.custom/locked' ./deploy.yaml)
-        echo "IS_LOCKED:=======> ${IS_LOCKED}"
+        echo "IS_LOCKED: ${IS_LOCKED}"
 
-        if IS_LOCKED=="true"; then
+        if [ "$IS_LOCKED" = "true" ]; then
+          echo "Deployment locked. Exiting."
           exit 1
         else
           yq eval 'select(.kind == "Deployment").metadata.name = "myapp-" + env(VERSION)' -i ./deploy.yaml
@@ -87,6 +89,7 @@ jobs:
           echo "Deploying to Kubernetes with version ${VERSION}"
           kubectl apply -f ./deploy.yaml -f ./service.yaml
           kubectl wait --for=condition=available --timeout=60s deployment/myapp-${VERSION}
+        fi
 
     # - name: Retrieve and Print Service URL
     #   run: |
