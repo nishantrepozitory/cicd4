@@ -41,7 +41,7 @@ jobs:
       id: acquire_lock
       with:
         mode: lock
-        environment: develop # Acquire lock for develop environment
+        environment: develop
 
     # - name: Set up Docker Buildx
     #   uses: docker/setup-buildx-action@v2
