@@ -29,14 +29,10 @@ jobs:
     - name: Wait if Lock is Held (with 3 retries)
       if: ${{ steps.check_lock.outputs.locked == 'true' }}
       run: |
-        echo "Lock is currently held by the develop branch. Waiting for 10 minutes..."
-        sleep 600
-
-        # Check if the lock is still held after waiting
         retry_count=0
         while [[ ${{ steps.check_lock.outputs.locked }} == 'true' ]] && (( retry_count < 3 )); do
-          echo "Lock is still held. Retrying in 10 minutes..."
-          sleep 600
+          echo "Lock is still held. Retrying in 10 minutes... ${retry_count}"
+          sleep 20
           retry_count=$((retry_count + 1))
         done
 
@@ -51,6 +47,13 @@ jobs:
       id: acquire_lock
       with:
         mode: lock
+        environment: develop
+
+    - name: Unlock
+      uses: github/lock@v2.3.0
+      id: unlock
+      with:
+        mode: unlock
         environment: develop
 
     # - name: Set up Docker Buildx
