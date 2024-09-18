@@ -24,13 +24,8 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Cache Minikube
-      uses: actions/cache@v3
-      with:
-        path: ~/.minikube
-        key: minikube-${{ runner.os }}-${{ github.sha }}
-        restore-keys: |
-          minikube-${{ runner.os }}-
+    - name: Set up Minikube
+      uses: medyagh/setup-minikube@latest
 
     - name: Install Istio CLI
       run: |
