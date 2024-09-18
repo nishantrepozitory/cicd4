@@ -13,6 +13,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions: write-all
 
     steps:
     - name: Checkout code
@@ -34,14 +35,11 @@ jobs:
         sleep 600
 
     # Step 3: Try to lock after waiting (or proceed if no lock is set)
-    - name: Set Lock for Current Branch
+    - name: Acquire lock
       uses: github/lock@v2.3.0
-      id: set_lock
+      id: acquire_lock
       with:
         mode: lock
-        reason: "Deployment by ${{ github.actor }} on branch ${{ github.ref_name }}"
-        environment: ${{ github.event.inputs.environment }}
-
 
     # - name: Set up Docker Buildx
     #   uses: docker/setup-buildx-action@v2
