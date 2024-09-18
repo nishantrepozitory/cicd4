@@ -67,7 +67,7 @@ jobs:
 
     - name: Install Istio CLI
       run: |
-        sleep 200
+        sleep 100
         if ! command -v istioctl &> /dev/null; then
           curl -L https://istio.io/downloadIstio | sh -
           sudo mv istio-*/bin/istioctl /usr/local/bin/
