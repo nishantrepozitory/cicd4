@@ -20,27 +20,28 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
-      # Step 1: Check if a lock is set
     - name: Check if Lock is Set
+      # Step 1: Check if Lock is Set (develop environment)
       uses: github/lock@v2.3.0
       id: check_lock
       with:
         mode: check
-        environment: ${{ github.event.inputs.environment }}
+        environment: develop # Specify develop environment for the lock
 
-    # Step 2: Wait for 10 minutes if lock is held
-    - name: Wait if Lock is Held
+    # Step 2: Wait for 10 minutes if lock is held (develop environment)
+    - name: Wait if Lock is Held (develop)
       if: ${{ steps.check_lock.outputs.locked == 'true' }}
       run: |
-        echo "Lock is currently held by another branch. Waiting for 10 minutes..."
+        echo "Lock is currently held by the develop branch. Waiting for 10 minutes..."
         sleep 600
 
     # Step 3: Try to lock after waiting (or proceed if no lock is set)
-    - name: Acquire lock
+    - name: Acquire lock (develop environment)
       uses: github/lock@v2.3.0
       id: acquire_lock
       with:
         mode: lock
+        environment: develop # Acquire lock for develop environment
 
     # - name: Set up Docker Buildx
     #   uses: docker/setup-buildx-action@v2
