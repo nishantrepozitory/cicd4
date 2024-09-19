@@ -4,13 +4,10 @@ on:
   push:
     branches:
     - main
+    - new
   pull_request:
     branches:
     - main
-
-concurrency:
-  group: workflow-lock # Group for locking the workflow
-  cancel-in-progress: false
 
 jobs:
   build:
@@ -80,10 +77,9 @@ jobs:
     #     environment: develop
 
     - name: Update VirtualService File with Commit Hash
-      run: |
-        COMMIT_HASH=${{ github.sha }}
-        yq eval 'select(.kind == "VirtualService").spec.http[0].route[0].destination.version =  "'"$COMMIT_HASH"'"' -i virtualService.yaml
-        kubectl apply -f ./virtualService.yaml
+      uses: ./.github/workflows/updateVirtualService.yml
+      with:
+        commit_hash: ${{ github.sha }}
 
     # - name: Unlock
     #   uses: github/lock@v2.3.0
