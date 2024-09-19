@@ -63,7 +63,7 @@ jobs:
       uses: github/lock@v2.3.0
       id: check_lock
       with:
-        mode: check
+        mode: unlock
         environment: develop
 
     - name: Check Lock Status (with retries)
