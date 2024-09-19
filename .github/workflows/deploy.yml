@@ -65,8 +65,11 @@ jobs:
       with:
         mode: check
         environment: develop
+
     - name: Check Lock Status (with retries)
       id: check_lock_status
+      env:
+        GH_TOKEN: ${{ github.token }}
       run: |
         max_retries=2
         retry_count=0
