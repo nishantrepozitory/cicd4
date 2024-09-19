@@ -71,7 +71,7 @@ jobs:
       env:
         GH_TOKEN: ${{ github.token }}
       run: |
-        max_retries=2
+        max_retries=100
         retry_count=0
         lock_status="locked"
 
