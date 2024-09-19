@@ -63,7 +63,7 @@ jobs:
       uses: github/lock@v2.3.0
       id: check_lock
       with:
-        mode: unlock
+        mode: check
         environment: develop
 
     - name: Check Lock Status (with retries)
@@ -78,15 +78,20 @@ jobs:
         while [[ $retry_count -lt $max_retries && $lock_status == "locked" ]]; do
           echo "Checking if lock is set (attempt $((retry_count + 1)))..."
 
-          # Retry fetching the lock status via GitHub Actions lock
-          lock_status=$(gh api \
+          # Debugging the response from the API
+          response=$(gh api \
             --method GET \
             --header "authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
-            /repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/jobs \
-            | jq '.jobs[] | select(.name == "Check if Lock is Set") | .conclusion' \
-            || echo "locked")
+            /repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/jobs)
 
-          if [[ $lock_status == "success" ]]; then
+          echo "API Response: $response"
+
+          # Extracting lock status from the response
+          lock_status=$(echo "$response" | jq '.jobs[] | select(.name == "Check if Lock is Set") | .conclusion' || echo "locked")
+
+          echo "Lock Status: $lock_status"
+
+          if [[ $lock_status == "\"success\"" ]]; then
             echo "Lock is not held."
             break
           fi
