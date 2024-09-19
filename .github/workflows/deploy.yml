@@ -96,7 +96,7 @@ jobs:
     - name: Update VirtualService File with Commit Hash
       run: |
         COMMIT_HASH=${{ github.sha }}
-        yq eval 'select(.kind == "VirtualService").spec.http[0].route[0].destination.version = env(COMMIT_HASH)' -i virtualService.yaml
+        yq eval 'select(.kind == "VirtualService").spec.http[0].route[0].destination.version =  "'"$COMMIT_HASH"'"' -i virtualService.yaml
         kubectl apply -f ./virtualService.yaml
 
     - name: Unlock
