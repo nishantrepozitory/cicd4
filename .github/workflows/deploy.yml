@@ -1,5 +1,10 @@
 name: CI/CD Pipeline
 
+# on:
+#   pull_request:
+#     types: [labeled]
+#     branches:
+#     - main
 on:
   push:
     branches:
@@ -10,6 +15,7 @@ on:
 
 jobs:
   build:
+    # if: contains(github.event.pull_request.labels.*.name, 'qa-env')
     runs-on: ubuntu-latest
     permissions: write-all
     steps:
@@ -52,6 +58,53 @@ jobs:
     #       --cache-to=type=local,dest=/tmp/.buildx-cache-new \
     #       -t nishantrepo/goapp:$VERSION --push .
     #     mv /tmp/.buildx-cache-new /tmp/.buildx-cache
+
+    - name: Check if Lock is Set
+      uses: github/lock@v2.3.0
+      id: check_lock
+      with:
+        mode: check
+        environment: develop
+
+    - name: Check if Lock is Set (with retries)
+      if: ${{ steps.check_lock.outputs.locked == 'true' }}
+      run: |
+        retry_count=0
+        while [[ ${{ steps.check_lock.outputs.locked }} == 'true' ]] && (( retry_count < 3 )); do
+          echo "Lock is currently held, waiting..."
+          sleep 20  # Wait 20 seconds between checks
+          retry_count=$((retry_count + 1))
+
+          # Re-check the lock
+          gh workflow run github/lock@v2.3.0 \
+            --with mode=check \
+            --with environment=develop
+        done
+
+        if [[ ${{ steps.check_lock.outputs.locked }} == 'true' ]]; then
+          echo "Lock is still held after 3 retries. Failing the job..."
+          exit 1
+        fi
+
+    - name: Acquire Lock
+      uses: github/lock@v2.3.0
+      id: acquire_lock
+      with:
+        mode: lock
+        environment: develop
+
+    - name: Update VirtualService File with Commit Hash
+      run: |
+        COMMIT_HASH=${{ github.sha }}
+        yq eval 'select(.kind == "VirtualService").spec.http[0].route[0].destination.version = env(COMMIT_HASH)' -i virtualService.yaml
+        kubectl apply -f ./virtualService.yaml
+
+    - name: Unlock
+      uses: github/lock@v2.3.0
+      id: unlock
+      with:
+        mode: unlock
+        environment: develop
 
     - name: Deploy to Kubernetes
       env:
