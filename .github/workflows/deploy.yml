@@ -11,6 +11,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions: write-all
 
     steps:
     - name: Checkout code
@@ -33,6 +34,13 @@ jobs:
           echo "Istio CLI already installed."
         fi
       continue-on-error: true
+
+    - name: Unlock
+      uses: github/lock@v2.3.0
+      id: unlock
+      with:
+        mode: unlock
+        environment: develop
 
     - name: Install Istio in Minikube
       run: |
