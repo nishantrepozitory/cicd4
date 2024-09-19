@@ -4,8 +4,6 @@ metadata:
   name: myapp-${VERSION}
   labels:
     app: myapp
-  annotations:
-    custom/locked: "true"
 spec:
   replicas: 1
   selector:
