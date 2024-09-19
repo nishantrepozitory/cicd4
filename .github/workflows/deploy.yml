@@ -60,7 +60,6 @@ jobs:
         kubectl config use-context minikube
         yq eval 'select(.kind == "Deployment").metadata.name = "myapp-" + env(VERSION)' -i ./deploy.yaml
         yq eval 'select(.kind == "Deployment").spec.template.spec.containers[0].image = "nishantrepo/goapp:" + env(VERSION)' -i ./deploy.yaml
-        yq eval 'select(.kind == "Service").metadata.name = "myapp-' + env(VERSION) + '"' -i ./service.yaml
 
         echo "Deploying to Kubernetes with version ${VERSION}"
         kubectl apply -f ./deploy.yaml -f ./service.yaml
@@ -68,9 +67,9 @@ jobs:
 
     - name: Retrieve and Print Service URL
       run: |
-        EXTERNAL_IP=$(kubectl get svc myapp-${VERSION} -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null)
+        EXTERNAL_IP=$(kubectl get svc myapp -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null)
         if [ -z "$EXTERNAL_IP" ]; then
-          NODE_PORT=$(kubectl get svc myapp-${VERSION} -o jsonpath='{.spec.ports[0].nodePort}')
+          NODE_PORT=$(kubectl get svc myapp -o jsonpath='{.spec.ports[0].nodePort}')
           NODE_IP=$(minikube ip)
           EXTERNAL_URL="http://$NODE_IP:$NODE_PORT"
         else:
@@ -96,7 +95,7 @@ jobs:
 
     - name: Expose Minikube service using ngrok
       run: |
-        NODE_PORT=$(kubectl get svc myapp-${VERSION} -o jsonpath='{.spec.ports[0].nodePort}')
+        NODE_PORT=$(kubectl get svc myapp -o jsonpath='{.spec.ports[0].nodePort}')
         echo "Starting ngrok on port $NODE_PORT"
         nohup ngrok http $NODE_PORT --log=stdout > ngrok.log &
         sleep 10 # Wait for ngrok to start
