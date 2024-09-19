@@ -16,13 +16,8 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Cache Minikube
-      uses: actions/cache@v3
-      with:
-        path: ~/.minikube
-        key: minikube-${{ runner.os }}-${{ github.sha }}
-        restore-keys: |
-          minikube-${{ runner.os }}-
+    - name: Set up Minikube
+      uses: medyagh/setup-minikube@latest
 
     - name: Install Istio CLI
       run: |
@@ -33,13 +28,6 @@ jobs:
           echo "Istio CLI already installed."
         fi
       continue-on-error: true
-
-    - name: Unlock
-      uses: github/lock@v2.3.0
-      id: unlock
-      with:
-        mode: unlock
-        environment: develop
 
     - name: Install Istio in Minikube
       run: |
