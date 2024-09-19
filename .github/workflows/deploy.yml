@@ -1,10 +1,5 @@
 name: CI/CD Pipeline
 
-# on:
-#   pull_request:
-#     types: [labeled]
-#     branches:
-#     - main
 on:
   push:
     branches:
@@ -15,7 +10,6 @@ on:
 
 jobs:
   build:
-    # if: contains(github.event.pull_request.labels.*.name, 'qa-env')
     runs-on: ubuntu-latest
     permissions: write-all
     steps:
@@ -44,21 +38,6 @@ jobs:
           echo "Istio already installed."
         fi
 
-    # - name: Login to Docker Hub
-    #   uses: docker/login-action@v2
-    #   with:
-    #     username: ${{ secrets.DOCKER_HUB_USERNAME }}
-    #     password: ${{ secrets.DOCKER_HUB_PAT }}
-
-    # - name: Build Image
-    #   run: |
-    #     VERSION=${{ github.ref_name }}
-    #     docker buildx create --use
-    #     docker buildx build --cache-from=type=local,src=/tmp/.buildx-cache \
-    #       --cache-to=type=local,dest=/tmp/.buildx-cache-new \
-    #       -t nishantrepo/goapp:$VERSION --push .
-    #     mv /tmp/.buildx-cache-new /tmp/.buildx-cache
-
     - name: Check if Lock is Set
       uses: github/lock@v2.3.0
       id: check_lock
@@ -66,46 +45,28 @@ jobs:
         mode: check
         environment: develop
 
-    - name: Check Lock Status (with retries)
-      id: check_lock_status
-      env:
-        GH_TOKEN: ${{ github.token }}
+    - name: Check if Lock is Set (with retries)
       run: |
-        max_retries=100
         retry_count=0
-        lock_status="locked"
-
-        while [[ $retry_count -lt $max_retries && $lock_status == "locked" ]]; do
-          echo "Checking if lock is set (attempt $((retry_count + 1)))..."
-
-          # Debugging the response from the API
-          response=$(gh api \
-            --method GET \
-            --header "authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
-            /repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/jobs)
-
-          echo "API Response: $response"
-
-          # Extracting lock status from the response
-          lock_status=$(echo "$response" | jq '.jobs[] | select(.name == "Check if Lock is Set") | .conclusion' || echo "locked")
-
-          echo "Lock Status: $lock_status"
-
-          if [[ $lock_status == "\"success\"" ]]; then
-            echo "Lock is not held."
-            break
-          fi
-
-          echo "Lock is currently held, waiting..."
-          sleep 20  # Wait 20 seconds between checks
-
+        max_retries=3
+        while [[ "${{ steps.check_lock.outputs.locked }}" == 'true' ]] && (( retry_count < max_retries )); do
+          echo "Lock is currently held, retrying in 20 seconds..."
+          sleep 20  # Wait 20 seconds before retrying
           retry_count=$((retry_count + 1))
+
+          # Retry lock check
+          gh api repos/${{ github.repository }}/actions/workflows/${{ github.workflow }} --method POST --input mode=check --environment=develop
         done
 
-        if [[ $lock_status == "locked" ]]; then
+        if [[ "${{ steps.check_lock.outputs.locked }}" == 'true' ]]; then
           echo "Lock is still held after $max_retries retries. Failing the job..."
           exit 1
+        else
+          echo "Lock is not held, proceeding."
         fi
+      continue-on-error: true
+      timeout-minutes: 2
+
 
     - name: Acquire Lock
       uses: github/lock@v2.3.0
