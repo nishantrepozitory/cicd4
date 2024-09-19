@@ -66,26 +66,32 @@ jobs:
         mode: check
         environment: develop
 
-    - name: Check if Lock is Still Held (with retries)
-      if: ${{ steps.check_lock.outputs.locked == 'true' }}
+    - name: Check Lock Status (with retries)
+      id: check_lock_status
       run: |
+        max_retries=3
         retry_count=0
-        while [[ ${{ steps.check_lock.outputs.locked }} == 'true' ]] && (( retry_count < 3 )); do
-          echo "Lock is currently held, waiting..."
-          sleep 20  # Wait 20 seconds between checks
-          retry_count=$((retry_count + 1))
+        lock_status="locked"
 
-          # Re-check the lock output
-          locked=$(gh action status -w ${{ github.workflow }} -j check_lock)
-          # Update the output variable based on the status
-          if [[ $locked == *"failure"* ]]; then
-            echo "Lock acquisition failed in check_lock step."
-            exit 1
+        while [[ $retry_count -lt $max_retries && $lock_status == "locked" ]]; do
+          echo "Checking if lock is set (attempt $((retry_count + 1)))..."
+
+          # Check lock status
+          lock_status=$(gh run list --workflow-lock --limit 1 | grep 'locked' || echo "locked")
+
+          if [[ $lock_status == "locked" ]]; then
+            echo "Lock is currently held, waiting..."
+            sleep 20  # Wait 20 seconds between checks
+          else
+            echo "Lock is not held."
+            break
           fi
+
+          retry_count=$((retry_count + 1))
         done
 
-        if [[ ${{ steps.check_lock.outputs.locked }} == 'true' ]]; then
-          echo "Lock is still held after 3 retries. Failing the job..."
+        if [[ $lock_status == "locked" ]]; then
+          echo "Lock is still held after $max_retries retries. Failing the job..."
           exit 1
         fi
 
