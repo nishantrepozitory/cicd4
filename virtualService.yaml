@@ -16,6 +16,7 @@ spec:
     route:
     - destination:
         host: myapp.default.svc.cluster.local
+        version: 1
         port:
           number: 8080
   - match:

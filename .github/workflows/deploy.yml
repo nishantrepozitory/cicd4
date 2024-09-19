@@ -8,6 +8,10 @@ on:
     branches:
     - main
 
+concurrency:
+  group: workflow-lock # Group for locking the workflow
+  cancel-in-progress: false
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -38,42 +42,42 @@ jobs:
           echo "Istio already installed."
         fi
 
-    - name: Check if Lock is Set
-      uses: github/lock@v2.3.0
-      id: check_lock
-      with:
-        mode: check
-        environment: develop
+    # - name: Check if Lock is Set
+    #   uses: github/lock@v2.3.0
+    #   id: check_lock
+    #   with:
+    #     mode: check
+    #     environment: develop
 
-    - name: Check if Lock is Set (with retries)
-      run: |
-        retry_count=0
-        max_retries=3
-        while [[ "${{ steps.check_lock.outputs.locked }}" == 'true' ]] && (( retry_count < max_retries )); do
-          echo "Lock is currently held, retrying in 20 seconds..."
-          sleep 20  # Wait 20 seconds before retrying
-          retry_count=$((retry_count + 1))
+    # - name: Check if Lock is Set (with retries)
+    #   run: |
+    #     retry_count=0
+    #     max_retries=3
+    #     while [[ "${{ steps.check_lock.outputs.locked }}" == 'true' ]] && (( retry_count < max_retries )); do
+    #       echo "Lock is currently held, retrying in 20 seconds..."
+    #       sleep 20  # Wait 20 seconds before retrying
+    #       retry_count=$((retry_count + 1))
 
-          # Retry lock check
-          gh api repos/${{ github.repository }}/actions/workflows/${{ github.workflow }} --method POST --input mode=check --environment=develop
-        done
+    #       # Retry lock check
+    #       gh api repos/${{ github.repository }}/actions/workflows/${{ github.workflow }} --method POST --input mode=check --environment=develop
+    #     done
 
-        if [[ "${{ steps.check_lock.outputs.locked }}" == 'true' ]]; then
-          echo "Lock is still held after $max_retries retries. Failing the job..."
-          exit 1
-        else
-          echo "Lock is not held, proceeding."
-        fi
-      continue-on-error: true
-      timeout-minutes: 2
+    #     if [[ "${{ steps.check_lock.outputs.locked }}" == 'true' ]]; then
+    #       echo "Lock is still held after $max_retries retries. Failing the job..."
+    #       exit 1
+    #     else
+    #       echo "Lock is not held, proceeding."
+    #     fi
+    #   continue-on-error: true
+    #   timeout-minutes: 2
 
 
-    - name: Acquire Lock
-      uses: github/lock@v2.3.0
-      id: acquire_lock
-      with:
-        mode: lock
-        environment: develop
+    # - name: Acquire Lock
+    #   uses: github/lock@v2.3.0
+    #   id: acquire_lock
+    #   with:
+    #     mode: lock
+    #     environment: develop
 
     - name: Update VirtualService File with Commit Hash
       run: |
@@ -81,12 +85,12 @@ jobs:
         yq eval 'select(.kind == "VirtualService").spec.http[0].route[0].destination.version =  "'"$COMMIT_HASH"'"' -i virtualService.yaml
         kubectl apply -f ./virtualService.yaml
 
-    - name: Unlock
-      uses: github/lock@v2.3.0
-      id: unlock
-      with:
-        mode: unlock
-        environment: develop
+    # - name: Unlock
+    #   uses: github/lock@v2.3.0
+    #   id: unlock
+    #   with:
+    #     mode: unlock
+    #     environment: develop
 
     - name: Deploy to Kubernetes
       env:
