@@ -65,27 +65,31 @@ jobs:
       with:
         mode: check
         environment: develop
-
     - name: Check Lock Status (with retries)
       id: check_lock_status
       run: |
-        max_retries=3
+        max_retries=2
         retry_count=0
         lock_status="locked"
 
         while [[ $retry_count -lt $max_retries && $lock_status == "locked" ]]; do
           echo "Checking if lock is set (attempt $((retry_count + 1)))..."
 
-          # Check lock status
-          lock_status=$(gh run list --workflow-lock --limit 1 | grep 'locked' || echo "locked")
+          # Retry fetching the lock status via GitHub Actions lock
+          lock_status=$(gh api \
+            --method GET \
+            --header "authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+            /repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/jobs \
+            | jq '.jobs[] | select(.name == "Check if Lock is Set") | .conclusion' \
+            || echo "locked")
 
-          if [[ $lock_status == "locked" ]]; then
-            echo "Lock is currently held, waiting..."
-            sleep 20  # Wait 20 seconds between checks
-          else
+          if [[ $lock_status == "success" ]]; then
             echo "Lock is not held."
             break
           fi
+
+          echo "Lock is currently held, waiting..."
+          sleep 20  # Wait 20 seconds between checks
 
           retry_count=$((retry_count + 1))
         done
