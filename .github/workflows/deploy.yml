@@ -105,4 +105,5 @@ jobs:
           exit 1
         else
           echo "Your ngrok URL is: $NGROK_URL"
+          sleep 1000
         fi
