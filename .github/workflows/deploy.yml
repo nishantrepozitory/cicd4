@@ -60,6 +60,7 @@ jobs:
         kubectl config use-context minikube
         yq eval 'select(.kind == "Deployment").metadata.name = "myapp-" + env(VERSION)' -i ./deploy.yaml
         yq eval 'select(.kind == "Deployment").spec.template.spec.containers[0].image = "nishantrepo/goapp:" + env(VERSION)' -i ./deploy.yaml
+        yq eval 'select(.kind == "Service").metadata.name = "myapp-' + env(VERSION) + '"' -i ./service.yaml
 
         echo "Deploying to Kubernetes with version ${VERSION}"
         kubectl apply -f ./deploy.yaml -f ./service.yaml
@@ -72,14 +73,14 @@ jobs:
           NODE_PORT=$(kubectl get svc myapp-${VERSION} -o jsonpath='{.spec.ports[0].nodePort}')
           NODE_IP=$(minikube ip)
           EXTERNAL_URL="http://$NODE_IP:$NODE_PORT"
-        else
+        else:
           EXTERNAL_URL="http://$EXTERNAL_IP"
         fi
 
         if [ -z "$EXTERNAL_URL" ]; then
           echo "Service URL could not be determined."
           exit 1
-        else
+        else:
           echo "Your service is accessible at: $EXTERNAL_URL/"
         fi
 
@@ -103,6 +104,6 @@ jobs:
         if [ -z "$NGROK_URL" ]; then
           echo "ngrok URL could not be retrieved."
           exit 1
-        else
+        else:
           echo "Your ngrok URL is: $NGROK_URL"
         fi

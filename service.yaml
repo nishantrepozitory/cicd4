@@ -1,15 +1,12 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: myapp # Use a static service name
-  labels:
-    app: myapp # Static label for service identification
+  name: myapp-${VERSION}
 spec:
   selector:
-    app: myapp # Static selector to match all versions of the deployment
+    app: myapp
   ports:
   - protocol: TCP
-    port: 80 # Expose port 80 for external access
-    targetPort: 8080 # Target the container's port
-  type: ClusterIP # Default service type for internal communication within the cluster
-
+    port: 8080
+    targetPort: 8080
+  type: NodePort
