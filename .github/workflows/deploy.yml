@@ -1,144 +1,30 @@
 name: CI/CD Pipeline
 
 on:
+  pull_request:
+    types: [labeled]
   push:
     branches:
-    - main
-    - new
-  pull_request:
-    branches:
-    - main
+      - '**'
 
 jobs:
   build:
     runs-on: ubuntu-latest
     permissions: write-all
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Set up Minikube
-      uses: medyagh/setup-minikube@latest
+      - name: Check if PR label contain "qa-env"
+        run: |
+          if [[ ! "${{ github.event.pull_request.labels }}" =~ "qa-env" ]]; then
+            echo "No 'qa-env' label found. Exiting workflow."
+            echo ${{ github.event.pull_request.labels }}
+          fi
 
-    - name: Install Istio CLI
-      run: |
-        if ! command -v istioctl &> /dev/null; then
-          curl -L https://istio.io/downloadIstio | sh -
-          sudo mv istio-*/bin/istioctl /usr/local/bin/
-        else
-          echo "Istio CLI already installed."
-        fi
-      continue-on-error: true
-
-    - name: Install Istio in Minikube
-      run: |
-        if ! kubectl get namespace istio-system &> /dev/null; then
-          istioctl install --set profile=demo -y
-          kubectl label namespace default istio-injection=enabled --overwrite
-        else
-          echo "Istio already installed."
-        fi
-
-    # - name: Check if Lock is Set
-    #   uses: github/lock@v2.3.0
-    #   id: check_lock
-    #   with:
-    #     mode: check
-    #     environment: develop
-
-    # - name: Check if Lock is Set (with retries)
-    #   run: |
-    #     retry_count=0
-    #     max_retries=3
-    #     while [[ "${{ steps.check_lock.outputs.locked }}" == 'true' ]] && (( retry_count < max_retries )); do
-    #       echo "Lock is currently held, retrying in 20 seconds..."
-    #       sleep 20  # Wait 20 seconds before retrying
-    #       retry_count=$((retry_count + 1))
-
-    #       # Retry lock check
-    #       gh api repos/${{ github.repository }}/actions/workflows/${{ github.workflow }} --method POST --input mode=check --environment=develop
-    #     done
-
-    #     if [[ "${{ steps.check_lock.outputs.locked }}" == 'true' ]]; then
-    #       echo "Lock is still held after $max_retries retries. Failing the job..."
-    #       exit 1
-    #     else
-    #       echo "Lock is not held, proceeding."
-    #     fi
-    #   continue-on-error: true
-    #   timeout-minutes: 2
-
-
-    # - name: Acquire Lock
-    #   uses: github/lock@v2.3.0
-    #   id: acquire_lock
-    #   with:
-    #     mode: lock
-    #     environment: develop
-
-    - name: Update VirtualService File with Commit Hash
-      uses: ./.github/workflows/updateVirtualService.yml
-      with:
-        commit_hash: ${{ github.sha }}
-
-    # - name: Unlock
-    #   uses: github/lock@v2.3.0
-    #   id: unlock
-    #   with:
-    #     mode: unlock
-    #     environment: develop
-
-    - name: Deploy to Kubernetes
-      env:
-        VERSION: ${{ github.ref_name }}
-      run: |
-        kubectl config use-context minikube
-        yq eval 'select(.kind == "Deployment").metadata.name = "myapp-" + env(VERSION)' -i ./deploy.yaml
-        yq eval 'select(.kind == "Deployment").spec.template.spec.containers[0].image = "nishantrepo/goapp:" + env(VERSION)' -i ./deploy.yaml
-
-        echo "Deploying to Kubernetes with version ${VERSION}"
-        kubectl apply -f ./deploy.yaml -f ./service.yaml
-        kubectl wait --for=condition=available --timeout=60s deployment/myapp-${VERSION}
-
-    - name: Retrieve and Print Service URL
-      run: |
-        EXTERNAL_IP=$(kubectl get svc myapp -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null)
-        if [ -z "$EXTERNAL_IP" ]; then
-          NODE_PORT=$(kubectl get svc myapp -o jsonpath='{.spec.ports[0].nodePort}')
-          NODE_IP=$(minikube ip)
-          EXTERNAL_URL="http://$NODE_IP:$NODE_PORT"
-        else
-          EXTERNAL_URL="http://$EXTERNAL_IP"
-        fi
-
-        if [ -z "$EXTERNAL_URL" ]; then
-          echo "Service URL could not be determined."
-          exit 1
-        else
-          echo "Your service is accessible at: $EXTERNAL_URL/"
-        fi
-
-    - name: Install ngrok
-      run: |
-        curl -s https://ngrok-agent.s3.amazonaws.com/ngrok.asc | sudo tee /etc/apt/trusted.gpg.d/ngrok.asc >/dev/null &&
-        echo "deb https://ngrok-agent.s3.amazonaws.com buster main" | sudo tee /etc/apt/sources.list.d/ngrok.list &&
-        sudo apt update && sudo apt install ngrok
-
-    - name: Login to ngrok
-      run: |
-        ngrok config add-authtoken ${{ secrets.NGROK_AUTH_TOKEN }}
-
-    - name: Expose Minikube service using ngrok
-      run: |
-        NODE_PORT=$(kubectl get svc myapp -o jsonpath='{.spec.ports[0].nodePort}')
-        echo "Starting ngrok on port $NODE_PORT"
-        nohup ngrok http $NODE_PORT --log=stdout > ngrok.log &
-        sleep 10 # Wait for ngrok to start
-        NGROK_URL=$(curl -s http://localhost:4040/api/tunnels | jq -r '.tunnels[0].public_url')
-        if [ -z "$NGROK_URL" ]; then
-          echo "ngrok URL could not be retrieved."
-          exit 1
-        else
-          echo "Your ngrok URL is: $NGROK_URL"
-          sleep 1000
-        fi
+      - name: Set Version
+        id: set-version
+        run: |
+          VERSION=qa-$(echo ${{ github.event.pull_request.number }} | sed 's/\//-/g')
+          echo "VERSION=$VERSION" | tee -a $GITHUB_ENV $GITHUB_OUTPUT
+          echo ${env(VERSION)}

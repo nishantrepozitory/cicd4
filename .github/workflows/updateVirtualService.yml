@@ -22,7 +22,7 @@ jobs:
 
     - name: Update VirtualService File with Commit Hash
       run: |
-        sleep 100
+        sleep 100   
         COMMIT_HASH="${{ inputs.commit_hash }}"
         yq eval 'select(.kind == "VirtualService").spec.http[0].route[0].destination.version =  "'"$COMMIT_HASH"'"' -i virtualService.yaml
         kubectl apply -f ./virtualService.yaml
