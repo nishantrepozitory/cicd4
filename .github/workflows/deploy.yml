@@ -15,11 +15,10 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Check if PR label contain "qa-env"
+      - name: Check if PR label contains "qa-env"
         run: |
-          if [[ ! "${{ github.event.pull_request.labels }}" =~ "qa-env" ]]; then
-            echo "No 'qa-env' label found. Exiting workflow."
-            labels=${{ toJSON(github.event.pull_request.labels) }}
+          labels=$(echo "${{ toJSON(github.event.pull_request.labels) }}" | jq -r '.[].name')
+          if [[ ! "$labels" =~ "qa-env" ]]; then
             echo "Labels: $labels"
             for label in $labels; do
               echo "Label: $label"
