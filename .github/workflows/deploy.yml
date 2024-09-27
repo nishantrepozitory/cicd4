@@ -21,7 +21,7 @@ jobs:
             echo "No 'qa-env' label found. Exiting workflow."
             labels=${{ toJSON(github.event.pull_request.labels) }}
             echo "Labels: $labels"
-            for label in $(echo $labels | jq -r '.[].name'); do
+            for label in $labels; do
               echo "Label: $label"
             done
           fi
