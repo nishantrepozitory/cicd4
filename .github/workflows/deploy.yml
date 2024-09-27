@@ -27,4 +27,4 @@ jobs:
         run: |
           VERSION=qa-$(echo ${{ github.event.pull_request.number }} | sed 's/\//-/g')
           echo "VERSION=$VERSION" | tee -a $GITHUB_ENV $GITHUB_OUTPUT
-          echo ${env(VERSION)}
+          echo "$VERSION"
