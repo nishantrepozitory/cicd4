@@ -1,0 +1,30 @@
+name: CI/CD Pipeline
+
+on:
+  pull_request:
+    types: [unlabeled]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions: write-all
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check if PR label contains "qa-env"
+        run: |
+          labels=$(echo "${{ toJSON(github.event.pull_request.labels) }}" | jq -r '.[].name')
+          if [[ ! "$labels" =~ "qa-env" ]]; then
+            echo "Labels: $labels"
+            for label in $labels; do
+              echo "Label: $label"
+            done
+          fi
+
+      - name: Set Version
+        id: set-version
+        run: |
+          VERSION=qa-$(echo ${{ github.event.pull_request.number }} | sed 's/\//-/g')
+          echo "VERSION=$VERSION" | tee -a $GITHUB_ENV $GITHUB_OUTPUT
+          echo "$VERSION"
