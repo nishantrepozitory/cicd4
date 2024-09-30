@@ -17,5 +17,5 @@ jobs:
             deploy
             test
           dispatch-type: workflow
-          ref: ${{ github.ref }}
+          ref: ${{ github.event.issue.pull_request.head.ref }}
 
