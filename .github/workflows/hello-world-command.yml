@@ -1,24 +1,20 @@
-name: Hello World Command
 on:
-  repository_dispatch:
-    types: [hello-world-local-command]
-
-permissions:
-  contents: read
-  pull-requests: write
+  workflow_dispatch:
+    inputs:
+      repository:
+        description: "The repository from which the slash command was dispatched"
+        required: true
+      comment-id:
+        description: "The comment-id of the slash command"
+        required: true
 jobs:
   helloWorld:
     runs-on: ubuntu-latest
     steps:
-      - name: Add reaction
-        uses: peter-evans/create-or-update-comment@v1
-        with:
-          comment-id: ${{ github.event.client_payload.github.payload.comment.id }}
-          reaction-type: hooray
-
-      - name: Create comment
-        uses: peter-evans/create-or-update-comment@v1
-        with:
-          issue-number: ${{ github.event.client_payload.github.payload.issue.number }}
-          body: |
-            Hello @${{ github.event.client_payload.github.actor }}!
+    - name: Add reaction
+      uses: peter-evans/create-or-update-comment@v4
+      with:
+        token: ${{ secrets.PAT }}
+        repository: ${{ github.event.inputs.repository }}
+        comment-id: ${{ github.event.inputs.comment-id }}
+        reactions: hooray
