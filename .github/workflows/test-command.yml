@@ -1,11 +1,19 @@
-name : test-command
+name: deploy-command
 on:
-  workflow_dispatch:
-
+  repository_dispatch:
+    types: [deploy-command]
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-    - name: Add reaction
-      run: |
-        echo "testing success"
+      - name: Checkout pull request
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.PAT }}
+          repository: ${{ github.event.client_payload.pull_request.head.repo.full_name }}
+          ref: ${{ github.event.client_payload.pull_request.head.ref }}
+          fetch-depth: 0
+
+      - name: Read and echo file content
+        run: |
+          cat read.txt
