@@ -1,62 +1,21 @@
-name: Slash Command Dispatch
+name: black-command
 on:
-  issue_comment:
-    # Type "edited" added here for test purposes. Where possible, avoid 
-    # using to prevent processing unnecessary events.
-    types: [created, edited]
+  repository_dispatch:
+    types: [black-command]
 jobs:
-  slashCommandDispatch:
+  black:
     runs-on: ubuntu-latest
     steps:
-      # Checkout is necessary here due to referencing a local action.
-      # It's also necessary when using the 'config-from-file' option.
-      # Otherwise, avoid using checkout to keep this workflow fast.
-      - uses: actions/checkout@v1
-
-      # Basic configuration
-      - name: Slash Command Dispatch
-        uses: ./
+      - uses: actions/checkout@v3
         with:
           token: ${{ secrets.PAT }}
-          reaction-token: ${{ secrets.PAT }}
-          commands: hello-world-local, ping-local
-          permission: none
-          issue-type: issue
+          repository: ${{ github.event.client_payload.pull_request.head.repo.full_name }}
+          ref: ${{ github.event.client_payload.pull_request.head.ref }}
 
-      # Advanced JSON configuration
-      - name: Slash Command Dispatch (JSON)
-        uses: ./
+      - name: Add reaction
+        uses: peter-evans/create-or-update-comment@v4
         with:
           token: ${{ secrets.PAT }}
-          reaction-token: ${{ secrets.PAT }}
-          config: >
-            [
-              {
-                "command": "hello-world",
-                "permission": "none",
-                "issue_type": "issue",
-                "repository": "peter-evans/slash-command-dispatch-processor"
-              },
-              {
-                "command": "hello-world",
-                "permission": "none",
-                "issue_type": "pull-request",
-                "repository": "peter-evans/slash-command-dispatch-processor",
-                "event_type_suffix": "-pr-command"
-              },
-              {
-                "command": "ping",
-                "permission": "none",
-                "issue_type": "issue",
-                "repository": "peter-evans/slash-command-dispatch-processor"
-              }
-            ]
-
-      # Advanced JSON configuration from file
-      - name: Slash Command Dispatch (JSON file)
-        uses: ./
-        with:
-          token: ${{ secrets.PAT }}
-          reaction-token: ${{ secrets.PAT }}
-          reactions: false
-          config-from-file: .github/slash-command-dispatch.json
+          repository: ${{ github.event.client_payload.github.payload.repository.full_name }}
+          comment-id: ${{ github.event.client_payload.github.payload.comment.id }}
+          reactions: hooray
