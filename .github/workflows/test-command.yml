@@ -1,0 +1,11 @@
+name : test-command
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Add reaction
+      run: |
+        echo "testing success"
