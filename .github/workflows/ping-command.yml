@@ -2,6 +2,11 @@ name: Ping Command
 on:
   repository_dispatch:
     types: [ping-local-command]
+
+permissions:
+  contents: read
+  pull-requests: write
+
 jobs:
   helloWorld:
     runs-on: ubuntu-latest
