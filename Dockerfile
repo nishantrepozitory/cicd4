@@ -10,7 +10,7 @@ COPY . .
 # RUN go mod download
 
 # Build the application binary
-RUN go build -o time-response main.go
+RUN go build -o time-response2 main.go
 
 # Expose port 8080
 EXPOSE 8080
