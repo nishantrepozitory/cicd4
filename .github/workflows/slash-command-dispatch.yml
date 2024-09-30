@@ -12,6 +12,8 @@ jobs:
           token: ${{ secrets.PAT }}
           commands: |
             deploy
+            integration-test
+            build-docs
           dispatch-type: workflow
 
       # Get the branch name
