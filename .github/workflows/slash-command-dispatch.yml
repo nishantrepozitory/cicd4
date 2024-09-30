@@ -6,43 +6,19 @@ jobs:
   slashCommandDispatch:
     runs-on: ubuntu-latest
     steps:
+
+      - name: Checkout current branch
+        uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.PAT }}
+          # Checkout the branch from which the PR originated
+          repository: ${{ github.event.issue.pull_request.head.repo.full_name }}
+          ref: ${{ github.event.issue.pull_request.head.ref }}
+
       - name: Slash Command Dispatch
         uses: peter-evans/slash-command-dispatch@v4
         with:
           token: ${{ secrets.PAT }}
           commands: |
             deploy
-            integration-test
-            build-docs
           dispatch-type: workflow
-
-      # Get the branch name
-      - name: Get the target branch name
-        id: vars
-        run: |
-          branch=${{ github.event.client_payload.slash_command.args.named.branch }}
-          if [[ -z "$branch" ]]; then branch="main"; fi
-          echo "branch=$branch" >> $GITHUB_OUTPUT
-
-      # Checkout the branch to test
-      - uses: actions/checkout@v3
-        with:
-          token: ${{ secrets.PAT }}
-          repository: ${{ github.event.client_payload.github.payload.repository.full_name }}
-          ref: ${{ steps.vars.outputs.branch }}
-
-      # Execute scripts, tools or actions
-      - name: Do something
-        run: |
-          # Execute a script, tool or action here
-          #
-          echo "Do something"
-
-      # Add reaction to the comment
-      - name: Add reaction
-        uses: peter-evans/create-or-update-comment@v4
-        with:
-          token: ${{ secrets.PAT }}
-          repository: ${{ github.event.client_payload.github.payload.repository.full_name }}
-          comment-id: ${{ github.event.client_payload.github.payload.comment.id }}
-          reactions: hooray
