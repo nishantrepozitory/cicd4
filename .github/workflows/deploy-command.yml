@@ -1,4 +1,4 @@
-name : deploy-command
+name: deploy-command
 on:
   workflow_dispatch:
 
@@ -6,6 +6,9 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-    - name: Add reaction
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Read and echo file content
       run: |
-        echo "Hello World"
+        cat read.txt

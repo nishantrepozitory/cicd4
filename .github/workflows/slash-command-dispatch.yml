@@ -21,4 +21,5 @@ jobs:
           token: ${{ secrets.PAT }}
           commands: |
             deploy
+            test
           dispatch-type: workflow
