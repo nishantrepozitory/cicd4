@@ -14,6 +14,3 @@ RUN go build -o time-response main.go
 
 # Expose port 8080
 EXPOSE 8080
-
-# Command to run the application 
-CMD ["./time-response"]
