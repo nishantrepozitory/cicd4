@@ -23,7 +23,6 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		Date: dateStr,
 	}
 
-	// Encode the response as JSON
 	json.NewEncoder(w).Encode(response)
 }
 
