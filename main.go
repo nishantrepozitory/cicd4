@@ -18,7 +18,6 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	timeStr := t.Format("Mon Jan 2 15:04:05 2006")
 	dateStr := t.Format("2006-01-02")
 
-	// Create a response object
 	response := TimeResponse{
 		Time: timeStr,
 		Date: dateStr,
