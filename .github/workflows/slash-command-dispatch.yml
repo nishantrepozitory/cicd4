@@ -21,8 +21,6 @@ jobs:
       - name: Slash Command Dispatch
         uses: ./
         with:
-          token: ${{ secrets.PAT }}
-          reaction-token: ${{ secrets.GITHUB_TOKEN }}
           commands: hello-world-local, ping-local
           permission: none
           issue-type: issue
@@ -31,8 +29,6 @@ jobs:
       - name: Slash Command Dispatch (JSON)
         uses: ./
         with:
-          token: ${{ secrets.PAT }}
-          reaction-token: ${{ secrets.GITHUB_TOKEN }}
           config: >
             [
               {
@@ -60,7 +56,5 @@ jobs:
       - name: Slash Command Dispatch (JSON file)
         uses: ./
         with:
-          token: ${{ secrets.PAT }}
-          reaction-token: ${{ secrets.GITHUB_TOKEN }}
           reactions: false
           config-from-file: .github/slash-command-dispatch.json

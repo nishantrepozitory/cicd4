@@ -13,14 +13,12 @@ jobs:
       - name: Add reaction
         uses: peter-evans/create-or-update-comment@v1
         with:
-          token: ${{ secrets.PAT }}
           comment-id: ${{ github.event.client_payload.github.payload.comment.id }}
           reaction-type: hooray
 
       - name: Create comment
         uses: peter-evans/create-or-update-comment@v1
         with:
-          token: ${{ secrets.PAT }}
           issue-number: ${{ github.event.client_payload.github.payload.issue.number }}
           body: |
             Hello @${{ github.event.client_payload.github.actor }}!
