@@ -1,11 +1,19 @@
-name: do-something-command
+name: Slash Command Dispatch
 on:
-  repository_dispatch:
-    types: [do-something-command]
+  issue_comment:
+    types: [created]
 jobs:
-  doSomething:
+  slashCommandDispatch:
     runs-on: ubuntu-latest
     steps:
+      - name: Slash Command Dispatch
+        uses: peter-evans/slash-command-dispatch@v4
+        with:
+          token: ${{ secrets.PAT }}
+          commands: |
+            deploy
+          dispatch-type: workflow
+
       # Get the branch name
       - name: Get the target branch name
         id: vars
