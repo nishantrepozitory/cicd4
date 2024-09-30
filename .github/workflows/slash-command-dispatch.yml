@@ -6,14 +6,8 @@ jobs:
   slashCommandDispatch:
     runs-on: ubuntu-latest
     steps:
-
       - name: Checkout current branch
-        uses: actions/checkout@v3
-        with:
-          token: ${{ secrets.PAT }}
-          # Checkout the branch from which the PR originated
-          repository: ${{ github.event.issue.pull_request.head.repo.full_name }}
-          ref: ${{ github.event.issue.pull_request.head.ref }}
+        uses: actions/checkout@v4
 
       - name: Slash Command Dispatch
         uses: peter-evans/slash-command-dispatch@v4
@@ -23,3 +17,5 @@ jobs:
             deploy
             test
           dispatch-type: workflow
+          ref: ${{ github.ref }}
+
