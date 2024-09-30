@@ -13,9 +13,17 @@ jobs:
         uses: peter-evans/slash-command-dispatch@v4
         with:
           token: ${{ secrets.PAT }}
-          commands: |
-            deploy
-            test
-          dispatch-type: workflow
-          ref: ${{ github.event.issue.pull_request.head.ref }}
+          # commands: |
+          #   deploy
+          #   test
+          # dispatch-type: repository
+          config: >
+            [
+              {
+                "command": "deploy",
+                "permission": "admin",
+                "issue_type": "pull-request",
+                "repository": "nishantrepozitory/cicd2"
+              },
+            ]
 
