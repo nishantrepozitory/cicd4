@@ -1,60 +1,38 @@
-name: Slash Command Dispatch
+name: do-something-command
 on:
-  issue_comment:
-    # Type "edited" added here for test purposes. Where possible, avoid
-    # using to prevent processing unnecessary events.
-    types: [created, edited]
-permissions:
-  contents: write
-  pull-requests: write
-
+  repository_dispatch:
+    types: [do-something-command]
 jobs:
-  slashCommandDispatch:
+  doSomething:
     runs-on: ubuntu-latest
     steps:
-      # Checkout is necessary here due to referencing a local action.
-      # It's also necessary when using the 'config-from-file' option.
-      # Otherwise, avoid using checkout to keep this workflow fast.
-      - uses: actions/checkout@v4
+      # Get the branch name
+      - name: Get the target branch name
+        id: vars
+        run: |
+          branch=${{ github.event.client_payload.slash_command.args.named.branch }}
+          if [[ -z "$branch" ]]; then branch="main"; fi
+          echo "branch=$branch" >> $GITHUB_OUTPUT
 
-      # Basic configuration
-      - name: Slash Command Dispatch
-        uses: ./
+      # Checkout the branch to test
+      - uses: actions/checkout@v3
         with:
-          commands: hello-world-local, ping-local
-          permission: none
-          issue-type: issue
+          token: ${{ secrets.PAT }}
+          repository: ${{ github.event.client_payload.github.payload.repository.full_name }}
+          ref: ${{ steps.vars.outputs.branch }}
 
-      # Advanced JSON configuration
-      - name: Slash Command Dispatch (JSON)
-        uses: ./
-        with:
-          config: >
-            [
-              {
-                "command": "hello-world",
-                "permission": "none",
-                "issue_type": "issue",
-                "repository": "peter-evans/slash-command-dispatch-processor"
-              },
-              {
-                "command": "hello-world",
-                "permission": "none",
-                "issue_type": "pull-request",
-                "repository": "peter-evans/slash-command-dispatch-processor",
-                "event_type_suffix": "-pr-command"
-              },
-              {
-                "command": "ping",
-                "permission": "none",
-                "issue_type": "issue",
-                "repository": "peter-evans/slash-command-dispatch-processor"
-              }
-            ]
+      # Execute scripts, tools or actions
+      - name: Do something
+        run: |
+          # Execute a script, tool or action here
+          #
+          echo "Do something"
 
-      # Advanced JSON configuration from file
-      - name: Slash Command Dispatch (JSON file)
-        uses: ./
+      # Add reaction to the comment
+      - name: Add reaction
+        uses: peter-evans/create-or-update-comment@v4
         with:
-          reactions: false
-          config-from-file: .github/slash-command-dispatch.json
+          token: ${{ secrets.PAT }}
+          repository: ${{ github.event.client_payload.github.payload.repository.full_name }}
+          comment-id: ${{ github.event.client_payload.github.payload.comment.id }}
+          reactions: hooray
