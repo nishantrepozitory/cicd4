@@ -8,7 +8,7 @@ on:
         description: "The comment-id of the slash command"
         required: true
 jobs:
-  helloWorld:
+  deploy:
     runs-on: ubuntu-latest
     steps:
     - name: Add reaction
