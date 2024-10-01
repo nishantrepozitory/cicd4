@@ -11,5 +11,5 @@ jobs:
 
     - name: echo text for qa-deploy
       run: |
-        echo "this is qa-deploy"
+        echo "this is qa-deploy2"
         cat read.txt
