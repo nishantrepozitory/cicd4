@@ -14,4 +14,4 @@ jobs:
 
       - name: Confirm commit SHA
         run: |
-          echo "Pull Request Data: ${{ toJSON(github.event.client_payload.pull_request) }}"
+          echo "Pull Request Data: ${{ toJSON(github.event.issue.pull_request) }}"
