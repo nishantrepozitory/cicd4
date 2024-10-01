@@ -16,4 +16,4 @@ jobs:
 
       - name: Confirm commit SHA
         run: |
-          echo "Running on commit SHA: ${{ github.event.issue.pull_request.head.sha }}"
+          echo "Running on commit SHA: ${{ github.event.issue.pull_request.head }}"
