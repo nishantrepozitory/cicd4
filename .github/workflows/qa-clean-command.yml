@@ -16,5 +16,5 @@ jobs:
 
       - name: echo text for cleanup
         run: |
-          echo "This is qa-clean2"
+          echo "This is qa-clean3"
           cat read.txt
