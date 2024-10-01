@@ -14,4 +14,4 @@ jobs:
 
       - name: Confirm commit SHA
         run: |
-          echo "Running on commit SHA: ${{ github.event.client_payload }}"
+          echo "Running on commit SHA: ${{ github.event.issue }}"
