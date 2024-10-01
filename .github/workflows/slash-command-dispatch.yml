@@ -1,15 +1,13 @@
-on: issue_comment
-name: Issue Comments
-permissions:
-  issues: write
+name: Slash Command Dispatch
+on:
+  issue_comment:
+    types: [created]
 jobs:
-  check_comments:
-    name: Check comments for /test
+  slashCommandDispatch:
     runs-on: ubuntu-latest
     steps:
-      - name: Check for Command
-        id: command
-        uses: xt0rted/slash-command-action@v1
+      - name: Slash Command Dispatch
+        uses: peter-evans/slash-command-dispatch@v4
         with:
           token: ${{ secrets.PAT }}
           commands: |
