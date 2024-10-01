@@ -1,4 +1,4 @@
-name: deploy-command
+name: qa-deploy-command
 on:
   workflow_dispatch:
 
@@ -9,6 +9,7 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
 
-    - name: Read and echo file content
+    - name: echo text for qa-deploy
       run: |
-        echo "texting"
+        echo "this is qa-deploy"
+        cat read.txt
