@@ -6,12 +6,36 @@ jobs:
   slashCommandDispatch:
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout pull request
+        uses: actions/checkout@v4
+
+      - name: Get Pull Request Details
+        run: |
+          PR_API_URL="${{ github.event.issue.pull_request.url }}"
+          echo "Fetching PR details from: $PR_API_URL"
+          curl -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" $PR_API_URL > pr_details.json
+          echo "PR Details:"
+          cat pr_details.json
+
+      - name: Extract Commit SHA
+        run: |
+          COMMIT_SHA=$(jq -r '.head.sha' pr_details.json)
+          echo "Checkout commit SHA: $COMMIT_SHA"
+      
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.PAT }}
+          repository: ${{ github.repository }}
+          ref: $COMMIT_SHA
+
       - name: Slash Command Dispatch
         uses: peter-evans/slash-command-dispatch@v4
         with:
           token: ${{ secrets.PAT }}
           commands: deploy
+          ref: $COMMIT_SHA
 
       - name: Confirm commit SHA
         run: |
-          echo "Running on commit SHA: ${{ github.event.issue }}"
+          echo "Pull Request Data: ${{ toJSON(github.event.issue.pull_request) }}"
