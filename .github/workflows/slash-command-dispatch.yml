@@ -14,5 +14,4 @@ jobs:
             qa-deploy
             qa-clean
           dispatch-type: workflow
-          event-type-suffix: "-command"
 
