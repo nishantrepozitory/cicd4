@@ -11,4 +11,9 @@ jobs:
         with:
           token: ${{ secrets.PAT }}
           commands: deploy
-          ref: ${{ github.event.issue.pull_request.head.ref }}
+          ref: ${{ github.event.issue.pull_request.head.sha }}
+
+
+      - name: Confirm commit SHA
+        run: |
+          echo "Running on commit SHA: ${{ github.event.client_payload.pull_request.head.sha }}"
