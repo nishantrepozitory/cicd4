@@ -1,9 +1,9 @@
-name: deploy-command
+name: test-command
 on:
   workflow_dispatch:
 
 jobs:
-  deploy:
+  test:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout pull request
