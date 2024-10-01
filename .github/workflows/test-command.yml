@@ -16,4 +16,4 @@ jobs:
 
       - name: Read and echo file content
         run: |
-          echo "changed text"
+          echo ${{ github.event.client_payload.pull_request.head.ref }}
