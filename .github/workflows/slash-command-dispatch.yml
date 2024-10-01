@@ -11,4 +11,3 @@ jobs:
         with:
           token: ${{ secrets.PAT }}
           commands: deploy
-          repository: "nishantrepozitory/cicd2"
