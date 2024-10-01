@@ -11,3 +11,4 @@ jobs:
         with:
           token: ${{ secrets.PAT }}
           commands: deploy
+          ref: ${{ github.event.issue.pull_request.head.ref }}
