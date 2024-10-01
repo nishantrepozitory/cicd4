@@ -1,4 +1,4 @@
-name: qa-clean-command
+name: qa clean
 on:
   workflow_dispatch:
 
