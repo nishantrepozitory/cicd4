@@ -16,4 +16,4 @@ jobs:
 
       - name: Read and echo file content
         run: |
-          echo "Another my text"
+          echo "Another new text"
