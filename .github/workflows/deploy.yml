@@ -1,15 +1,15 @@
-name: qa-deploy-command
+name: qadeploy-command
 on:
   workflow_dispatch:
 
 jobs:
-  qa-deploy:
+  qadeploy:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
 
-    - name: echo text for qa-deploy
+    - name: echo text for qadeploy
       run: |
-        echo "this is qa-deploy"
+        echo "this is qadeploy"
         cat read.txt

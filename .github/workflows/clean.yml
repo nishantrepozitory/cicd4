@@ -1,9 +1,9 @@
-name: qa-clean-command
+name: qaclean-command
 on:
   workflow_dispatch:
 
 jobs:
-  qa-clean:
+  qaclean:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout pull request
@@ -16,5 +16,5 @@ jobs:
 
       - name: echo text for cleanup
         run: |
-          echo "This is qa-clean"
+          echo "This is qaclean"
           cat read.txt
