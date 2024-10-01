@@ -1,4 +1,4 @@
-name: test-command
+name: qa-clean-command
 on:
   workflow_dispatch:
 
@@ -14,6 +14,7 @@ jobs:
           ref: ${{ github.event.client_payload.pull_request.head.ref }}
           fetch-depth: 0
 
-      - name: Read and echo file content
+      - name: echo text for cleanup
         run: |
-          echo "Another new text"
+          echo "This is qa-clean"
+          cat read.txt

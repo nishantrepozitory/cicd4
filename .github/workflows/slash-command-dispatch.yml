@@ -11,10 +11,8 @@ jobs:
         id: command
         uses: xt0rted/slash-command-action@v1
         with:
-          command: deploy
-          reaction: "true"
-          reaction-type: "eyes"
-          allow-edits: "false"
-          permission-level: admin
-      - name: Act on the command
-        run: echo "The command was '${{ steps.command.outputs.command-name }}' with arguments '${{ steps.command.outputs.command-arguments }}'"
+          token: ${{ secrets.PAT }}
+          commands: |
+            qa-deploy
+            qa-clean
+          dispatch-type: workflow
