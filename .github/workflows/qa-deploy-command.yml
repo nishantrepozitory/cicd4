@@ -1,6 +1,6 @@
 name: qa deploy
 on:
-  push:
+  workflow_dispatch:
 
 jobs:
   deploy:
