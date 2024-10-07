@@ -17,9 +17,12 @@ jobs:
       - name: Print input object
         run: echo ${{toJson(inputs)}}
 
-      - name: Print context.issue.number
-        run: echo ${context.issue.number}
-          
+      - uses: actions/github-script@v6
+        name: Print context
+        with:
+          script: |
+            console.log(JSON.stringify(context, null, 2));
+      
       - uses: actions/github-script@v6
         id: get_issue_number
         with:
