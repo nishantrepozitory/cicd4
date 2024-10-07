@@ -13,39 +13,28 @@ jobs:
       #   with:
       #     token: ${{ secrets.PAT }}
       #     fetch-depth: 0
-
-      - name: Print input object
-        run: echo ${{toJson(inputs)}}
-
-      - uses: actions/github-script@v6
-        name: Print context
-        with:
-          script: |
-            console.log(JSON.stringify(context, null, 2));
-      
+      - name: Get Pull Request Number
+        id: pr
+        run: echo "pull_request_number=$(gh pr view --json number -q .number)" >> $GITHUB_OUTPUT
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    
+      - name: Issue number
+        run: echo '${{ steps.pr.outputs.pull_request_number }}'
+        
       - uses: actions/github-script@v6
         id: get_issue_number
         with:
           script: |
-            if (context.issue.number) {
-              console.log("Issue number found: ", context.issue.number);
-              return context.issue.number;
-            } else {
-              console.log("No issue number found, retrieving PR number from commit");
-              const pullRequests = await github.rest.repos.listPullRequestsAssociatedWithCommit({
-                commit_sha: context.sha,
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-              });
-              
-              if (pullRequests.data.length > 0) {
-                console.log("PR number found from commit: ", pullRequests.data[0].number);
-                return pullRequests.data[0].number;
-              } else {
-                console.log("No PR found for this commit.");
-                return null;
-              }
-            }
+            const pullRequests = await github.rest.repos.listPullRequestsAssociatedWithCommit({
+              commit_sha: context.sha,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+            });
+            
+            if (pullRequests.data.length > 0) {
+              return pullRequests.data[0].number;
+            } 
           result-encoding: string
       
       - name: Issue number
