@@ -8,11 +8,11 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      # - name: Checkout pull request
-      #   uses: actions/checkout@v4
-      #   with:
-      #     token: ${{ secrets.PAT }}
-      #     fetch-depth: 0
+      - name: Checkout pull request
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.PAT }}
+          fetch-depth: 0
       - name: Get Pull Request Number
         id: pr
         run: echo "pull_request_number=$(gh pr view --json number -q .number)" >> $GITHUB_OUTPUT
