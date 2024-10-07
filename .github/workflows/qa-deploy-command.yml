@@ -1,8 +1,7 @@
 name: qa deploy
 on:
   workflow_dispatch:
-permissions:
-  pull-requests: read
+permissions: write-all
 
 jobs:
   deploy:
