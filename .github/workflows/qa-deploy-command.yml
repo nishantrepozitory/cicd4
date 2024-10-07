@@ -18,26 +18,17 @@ jobs:
         run: echo ${{toJson(inputs)}}
 
       - name: Print context.issue.number
-        run: echo $context.issue.number
-          
-      - name: Print github.event.number
-        run: echo "${{ github.event.number }}"
-
-      - name: Get Pull Request Number
-        id: pr
-        run: echo "::set-output name=pull_request_number::$(gh pr view --json number -q .number || echo "")"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: echo context.issue.number
           
       - uses: actions/github-script@v6
         id: get_issue_number
         with:
           script: |
             if (context.issue.number) {
-              // Return issue number if present
+              echo "Return issue number if present"
               return context.issue.number;
             } else {
-              // Otherwise return issue number from commit
+              echo "Otherwise return issue number from commit"
               return (
                 await github.rest.repos.listPullRequestsAssociatedWithCommit({
                   commit_sha: context.sha,
