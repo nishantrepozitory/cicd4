@@ -6,6 +6,9 @@ jobs:
   clean:
     runs-on: ubuntu-latest
     steps:
+      - name: Print pull_request object
+        run: echo "${{ toJson(github.event.client_payload.pull_request) }}"
+
       - name: Checkout pull request
         uses: actions/checkout@v4
         with:
