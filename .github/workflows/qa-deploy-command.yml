@@ -18,25 +18,33 @@ jobs:
         run: echo ${{toJson(inputs)}}
 
       - name: Print context.issue.number
-        run: echo context.issue.number
+        run: echo ${context.issue.number}
           
       - uses: actions/github-script@v6
         id: get_issue_number
         with:
           script: |
             if (context.issue.number) {
-              echo "Return issue number if present"
+              console.log("Issue number found: ", context.issue.number);
               return context.issue.number;
             } else {
-              echo "Otherwise return issue number from commit"
-              return (
-                await github.rest.repos.listPullRequestsAssociatedWithCommit({
-                  commit_sha: context.sha,
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                })
-              ).data[0].number;
+              console.log("No issue number found, retrieving PR number from commit");
+              const pullRequests = await github.rest.repos.listPullRequestsAssociatedWithCommit({
+                commit_sha: context.sha,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+              });
+              
+              if (pullRequests.data.length > 0) {
+                console.log("PR number found from commit: ", pullRequests.data[0].number);
+                return pullRequests.data[0].number;
+              } else {
+                console.log("No PR found for this commit.");
+                return null;
+              }
             }
           result-encoding: string
+      
       - name: Issue number
-        run: echo '${{steps.get_issue_number.outputs.result}}'
+        run: echo '${{ steps.get_issue_number.outputs.result }}'
+      
