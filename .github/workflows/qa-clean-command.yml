@@ -1,6 +1,5 @@
 name: qa clean
 on:
-  push:
   workflow_dispatch:
 
 jobs:

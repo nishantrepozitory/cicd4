@@ -1,22 +1,48 @@
 name: qa deploy
 on:
   workflow_dispatch:
+permissions:
+  pull-requests: read
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Print pull_request object
-        run: echo "${{ toJson(github.event.pull_request) }}"
+      # - name: Checkout pull request
+      #   uses: actions/checkout@v4
+      #   with:
+      #     token: ${{ secrets.PAT }}
+      #     fetch-depth: 0
 
-      - name: Checkout pull request
-        uses: actions/checkout@v4
+      - name: Print event object
+        run: echo "${ GITHUB_REF }"
+          
+      - name: Print github.event.number
+        run: echo "${{ github.event.number }}"
+
+      - name: Get Pull Request Number
+        id: pr
+        run: echo "::set-output name=pull_request_number::$(gh pr view --json number -q .number || echo "")"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          
+      - uses: actions/github-script@v6
+        id: get_issue_number
         with:
-          token: ${{ secrets.PAT }}
-          repository: ${{ github.event.client_payload.pull_request.head.repo.full_name }}
-          ref: ${{ github.event.client_payload.pull_request.head.ref }}
-          fetch-depth: 0
-
-      - name: echo text for deploy
-        run: |
-          echo "This is qa-deploy123"
+          script: |
+            if (context.issue.number) {
+              // Return issue number if present
+              return context.issue.number;
+            } else {
+              // Otherwise return issue number from commit
+              return (
+                await github.rest.repos.listPullRequestsAssociatedWithCommit({
+                  commit_sha: context.sha,
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                })
+              ).data[0].number;
+            }
+          result-encoding: string
+      - name: Issue number
+        run: echo '${{steps.get_issue_number.outputs.result}}'
