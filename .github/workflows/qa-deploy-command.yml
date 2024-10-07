@@ -7,7 +7,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Print pull_request object
-        run: echo "${{ toJson(github.event.workflow) }}"
+        run: echo "${{ toJson(github.event.pull_request) }}"
 
       - name: Checkout pull request
         uses: actions/checkout@v4
