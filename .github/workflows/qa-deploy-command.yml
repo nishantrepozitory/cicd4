@@ -16,7 +16,7 @@ jobs:
       - name: Check for changes in .github/workflows
         run: |
           changed_files=$(gh pr diff --name-only)
-          if echo "$changed_files" | grep -q '^\.github/workflows/'; then
+          if echo "$changed_files" | grep -q '^\src/migrations/'; then
             echo "Changes detected in .github/workflows directory. Exiting workflow."
             exit 1  # Exit with failure status
           fi
