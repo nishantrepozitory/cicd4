@@ -19,8 +19,6 @@ jobs:
           if echo "$changed_files" | grep -q '^src/migrations/'; then
             echo "Changes detected in migrations. Exiting workflow."
             exit 1  # Exit with failure status
-          else
-            echo "No changes in migrations. Proceeding."
           fi
         env:
           GITHUB_TOKEN: ${{ secrets.PAT }}
