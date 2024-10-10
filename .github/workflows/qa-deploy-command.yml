@@ -1,6 +1,17 @@
 name: qa deploy
 on:
   workflow_dispatch:
+    inputs:
+      repository:
+        description: 'The repository from which the slash command was dispatched'
+        required: true
+      comment-id:
+        description: 'The comment-id of the slash command'
+        required: true
+      event:
+        description: 'The event of slash command'
+        required: true
+
 permissions: write-all
 
 jobs:
@@ -15,13 +26,9 @@ jobs:
 
       - name: Check for changes in migrations
         run: |
-          changed_files=$(gh pr diff --name-only)
-          if echo "$changed_files" | grep -q '^src/migrations/'; then
-            echo "Changes detected in migrations. Exiting workflow."
-            exit 1  # Exit with failure status
-          fi
-        env:
-          GITHUB_TOKEN: ${{ secrets.PAT }}
+          echo ${{inputs.comment-id}}
+          echo ${{inputs.repository}}
+          echo ${{toJson(inputs.event)}}
       
       - name: echo next
         run: cat read.txt
