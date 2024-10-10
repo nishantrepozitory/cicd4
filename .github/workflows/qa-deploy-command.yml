@@ -24,4 +24,4 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.PAT }}
       
       - name: echo next
-        run: echo "This is next"
+        run: cat read.txt
