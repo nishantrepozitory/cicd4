@@ -20,5 +20,8 @@ jobs:
             echo "Changes detected in .github/workflows directory. Exiting workflow."
             exit 1  # Exit with failure status
           fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.PAT }}
+
       - name: echo next
         run: echo "This is next"
