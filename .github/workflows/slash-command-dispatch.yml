@@ -6,9 +6,6 @@ jobs:
   slashCommandDispatch:
     runs-on: ubuntu-latest
     steps:
-      - name: echo
-        run: echo "${{toJson(github)}}"
-
       - name: Slash Command Dispatch
         uses: peter-evans/slash-command-dispatch@v4
         with:
@@ -20,4 +17,4 @@ jobs:
           static-args: |
             repository=${{ github.repository }}
             comment-id=${{ github.event.comment.id }}
-            event=${{github.event}}
+            event=${{toJson(github.event.issue)}}
