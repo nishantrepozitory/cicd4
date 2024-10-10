@@ -21,4 +21,15 @@ jobs:
           echo "$pr_data"
         env:
           GITHUB_TOKEN: ${{ secrets.PAT }}
-      
+
+      - name: Get base and head commit SHA
+        id: pr-commits
+        run: |
+          base_commit=$(gh pr view --json baseRefOid -q '.baseRefOid')
+          head_commit=$(gh pr view --json headRefOid -q '.headRefOid')
+          echo "base_commit=$base_commit" >> $GITHUB_OUTPUT
+          echo "head_commit=$head_commit" >> $GITHUB_OUTPUT
+          echo "Base commit: $base_commit"
+          echo "Head commit: $head_commit"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
