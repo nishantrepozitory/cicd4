@@ -56,9 +56,9 @@ jobs:
       # New Step to Print the Version
       - name: Print version
         run: |
-          echo "Version set: ${{ steps.set_version.outputs.version }}"
+          echo "Version set: ${{ steps.set-version.outputs.version }}"
 
       # New Step to Print the Commit SHA
       - name: Print commit SHA
         run: |
-          echo "Commit SHA: ${{ steps.commit_sha.outputs.commit_sha }}"
+          echo "Commit SHA: ${{ steps.commit-sha.outputs.short }}"
