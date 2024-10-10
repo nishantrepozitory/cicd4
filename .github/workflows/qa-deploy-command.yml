@@ -17,13 +17,21 @@ jobs:
         with:
           token: ${{ secrets.PAT }}
           fetch-depth: 0
-      
-      - name: Extract branch name from PR URL
-        id: extract_branch
+
+      - name: Get branch name from PR URL
+        id: get_branch
         run: |
           echo "PR_URL=${{ github.event.inputs.url }}" # Log the PR URL for debugging
-          # Extract the branch name from the URL
-          BRANCH_NAME=$(echo "${{ github.event.inputs.url }}" | sed -E 's#.*/([^/]+)/([^/]+)#\2#') # Adjust according to your URL structure
+          
+          # Extract the PR number from the URL
+          PR_NUMBER=$(echo "${{ github.event.inputs.url }}" | awk -F '/' '{print $NF}')
+          echo "PR_NUMBER=$PR_NUMBER" >> $GITHUB_ENV
+
+          # Use the GitHub API to get the PR details
+          PR_DATA=$(curl -s -H "Authorization: token ${{ secrets.PAT }}" "https://api.github.com/repos/${{ github.repository }}/pulls/$PR_NUMBER")
+          
+          # Extract the head branch name from the PR data
+          BRANCH_NAME=$(echo "$PR_DATA" | jq -r '.head.ref')
           echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_ENV # Set the branch name as an environment variable
 
       - name: Checkout to the branch
