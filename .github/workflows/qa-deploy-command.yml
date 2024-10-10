@@ -61,4 +61,4 @@ jobs:
       # New Step to Print the Commit SHA
       - name: Print commit SHA
         run: |
-          echo "Commit SHA: ${{ steps.commit-sha.outputs.short }}"
+          echo "Commit SHA: ${{ steps.commit-sha.outputs.hash }}"
