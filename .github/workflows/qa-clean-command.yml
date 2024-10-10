@@ -1,6 +1,13 @@
 name: qa clean
 on:
   workflow_dispatch:
+    inputs:
+      repository:
+        description: 'The repository from which the slash command was dispatched'
+        required: true
+      comment-id:
+        description: 'The comment-id of the slash command'
+        required: true
   pull_request:
     types: [closed]
 

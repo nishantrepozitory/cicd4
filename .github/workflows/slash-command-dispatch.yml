@@ -11,8 +11,6 @@ jobs:
         with:
           token: ${{ secrets.PAT }}
           commands: |
-            qa-deploy
             qa-clean
-          dispatch-type: workflow
-          event-type-suffix: "-command"
-
+            qa-deploy
+          issue-type: pull-request

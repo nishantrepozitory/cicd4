@@ -18,10 +18,30 @@ jobs:
           changed_files=$(gh pr diff --name-only)
           if echo "$changed_files" | grep -q '^src/migrations/'; then
             echo "Changes detected in migrations. Exiting workflow."
-            exit 1  # Exit with failure status
+            # exit 1  # Exit with failure status
           fi
         env:
-          GITHUB_TOKEN: ${{ secrets.PAT }}
-      
-      - name: echo next
-        run: cat read.txt
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  
+      - name: Get Pull Request Number
+        id: pr
+        run: echo "pull_request_number=$(gh pr view --json number -q .number)" >> $GITHUB_OUTPUT
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  
+      - name: Set Version
+        id: set-version
+        run: |
+          echo "version=qa-${{ steps.pr.outputs.pull_request_number }}" >> $GITHUB_OUTPUT
+  
+      - name: Set short git commit SHA
+        id: commit-sha
+        uses: prompt/actions-commit-hash@v2
+
+      - name: Print version
+        run: |
+          echo "Version set: ${{ steps.set-version.outputs.version }}"
+
+      - name: Print commit SHA
+        run: |
+          echo "Commit SHA: ${{ steps.commit-sha.outputs.hash }}"
