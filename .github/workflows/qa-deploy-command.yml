@@ -28,7 +28,6 @@ jobs:
           BRANCH_NAME=$(gh pr view $PR_NUMBER --json headRefName -q .headRefName)
           echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_ENV
           echo env(BRANCH_NAME)
-          echo $BRANCH_NAME
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
