@@ -28,7 +28,7 @@ jobs:
         run: |
           echo ${{inputs.comment-id}}
           echo ${{inputs.repository}}
-          echo ${{toJson(inputs.event)}}
+          echo "${{ toJson(inputs.event) }}"
       
       - name: echo next
         run: cat read.txt
