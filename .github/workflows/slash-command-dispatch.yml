@@ -15,6 +15,4 @@ jobs:
             qa-deploy
           dispatch-type: workflow
           static-args: |
-            repository=${{ github.repository }}
-            comment-id=${{ github.event.comment.id }}
             event=${{toJson(github.event.issue)}}
