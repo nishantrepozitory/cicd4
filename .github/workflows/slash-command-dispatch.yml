@@ -15,4 +15,4 @@ jobs:
             qa-deploy
           dispatch-type: workflow
           static-args: |
-            event=${{toJson(github.event.issue)}}
+            url=${{github.event.issue.pull_request.url}}
