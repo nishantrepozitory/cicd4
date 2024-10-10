@@ -13,6 +13,4 @@ jobs:
           commands: |
             qa-clean
             qa-deploy
-          dispatch-type: workflow
-          static-args: |
-            url=${{github.event.issue.pull_request.url}}
+          issue_type: pull-request
