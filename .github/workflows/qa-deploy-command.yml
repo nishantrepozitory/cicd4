@@ -1,33 +1,18 @@
 name: qa deploy
 on:
-  workflow_dispatch:
-    inputs:
-      url:
-        description: 'The URL of the PR'
-        required: true
-
-permissions: write-all
+  repository_dispatch:
+    types: [qa-deploy-command]
 
 jobs:
-  deploy:
+  qa-deploy-command:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
-          fetch-depth: 0 
-      
-      - name: Switch to PR's branch
-        id: checkout_branch
-        run: |
-          PR_NUMBER=$(echo "${{ github.event.inputs.url }}" | awk -F '/' '{print $NF}')
-          BRANCH_NAME=$(gh pr view $PR_NUMBER --json headRefName -q .headRefName)
-          echo "pull_request_number=$PR_NUMBER" >> $GITHUB_OUTPUT
-          echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_ENV
-          git checkout $BRANCH_NAME
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  
+          token: ${{ secrets.PAT }}
+          repository: ${{ github.event.client_payload.pull_request.head.repo.full_name }}
+          ref: ${{ github.event.client_payload.pull_request.head.ref }}
+
       - name: Check for changes in migrations
         run: |
           changed_files=$(gh pr diff --name-only)
@@ -53,12 +38,10 @@ jobs:
         id: commit-sha
         uses: prompt/actions-commit-hash@v2
 
-      # New Step to Print the Version
       - name: Print version
         run: |
           echo "Version set: ${{ steps.set-version.outputs.version }}"
 
-      # New Step to Print the Commit SHA
       - name: Print commit SHA
         run: |
           echo "Commit SHA: ${{ steps.commit-sha.outputs.hash }}"

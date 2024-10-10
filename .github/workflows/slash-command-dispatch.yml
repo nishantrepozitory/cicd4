@@ -13,4 +13,4 @@ jobs:
           commands: |
             qa-clean
             qa-deploy
-          issue_type: pull-request
+          issue-type: pull-request
