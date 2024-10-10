@@ -6,6 +6,9 @@ jobs:
   slashCommandDispatch:
     runs-on: ubuntu-latest
     steps:
+      - name: echo
+        run: echo "${{toJson(github.event)}}"
+
       - name: Slash Command Dispatch
         uses: peter-evans/slash-command-dispatch@v4
         with:
