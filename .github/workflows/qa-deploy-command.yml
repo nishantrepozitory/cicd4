@@ -13,30 +13,11 @@ jobs:
           token: ${{ secrets.PAT }}
           fetch-depth: 0
 
-      - name: Get Pull Request Number
-        id: pr
-        run: echo "pull_request_number=$(gh pr view --json number -q .number)" >> $GITHUB_OUTPUT
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Issue number
-        run: echo '${{ steps.pr.outputs.pull_request_number }}'
-        
-      - uses: actions/github-script@v6
-        id: get_issue_number
-        with:
-          script: |
-            const pullRequests = await github.rest.repos.listPullRequestsAssociatedWithCommit({
-              commit_sha: context.sha,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-            });
-            
-            if (pullRequests.data.length > 0) {
-              return pullRequests.data[0].number;
-            } 
-          result-encoding: string
-      
-      - name: Issue number
-        run: echo '${{ steps.get_issue_number.outputs.result }}'
-      
+      - name: Check for changes in migration files
+        id: check_changes
+        run: |
+          git fetch --all
+          base_commit=$(jq -r .pull_request.base.sha $GITHUB_EVENT_PATH)
+          current_commit=$(jq -r .pull_request.head.sha $GITHUB_EVENT_PATH)
+          git diff --name-only $base_commit $current_commit > changed_files.txt
+          cat changed_files.txt
