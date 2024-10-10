@@ -12,6 +12,12 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.PAT }}
+          fetch-depth: 0
+
       - name: Install GitHub CLI
         run: sudo apt-get install gh
 
@@ -21,15 +27,9 @@ jobs:
           PR_NUMBER=$(echo "${{ github.event.inputs.url }}" | awk -F '/' '{print $NF}')
           BRANCH_NAME=$(gh pr view $PR_NUMBER --json headRefName -q .headRefName)
           echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_ENV
+          echo ${{ env.BRANCH_NAME }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Checkout branch
-        uses: actions/checkout@v4
-        with:
-          token: ${{ secrets.PAT }}
-          fetch-depth: 0
-          ref: ${{ env.BRANCH_NAME }}
 
       - name: Echo next
         run: cat read.txt
