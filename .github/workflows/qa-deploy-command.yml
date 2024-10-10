@@ -15,11 +15,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          # token: ${{ secrets.PAT }}
           fetch-depth: 0
-
-      - name: Install GitHub CLI
-        run: sudo apt-get install gh
 
       - name: Get branch name from PR URL
         id: get_branch
