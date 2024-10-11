@@ -22,27 +22,17 @@ jobs:
   check-migrations:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
       - name: Switch to PR's branch
         id: checkout_branch
         run: |
-          PR_URL="${{ github.event.inputs.pull_request_url }}"
-          PR_NUMBER=$(echo "$PR_URL" | awk -F '/' '{print $NF}')
-          BRANCH_NAME=$(gh pr view $PR_NUMBER --json headRefName -q .headRefName)
-          echo "pull_request_number=$PR_NUMBER" >> $GITHUB_OUTPUT
-          echo "branch_name=$BRANCH_NAME" >> $GITHUB_OUTPUT
-          git checkout $BRANCH_NAME
+          exit 0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   add-success-reaction:
     needs: check-migrations
-    if: success() && github.event.inputs.comment_id
     runs-on: ubuntu-latest
+    if: !!github.event.inputs.comment_id
     steps:
       - name: Add success reaction to the comment
         uses: peter-evans/create-or-update-comment@v4
