@@ -1,47 +1,49 @@
-name: qa deploy
+name: Deploy QA Environment
+
 on:
-  repository_dispatch:
-    types: [qa-deploy-command]
+  workflow_dispatch:
+    inputs:
+      pull_request_url:
+        description: 'URL of the pull request for identifying for which QA environment should be deployed.'
+        required: true
+      comment_id:
+        description: 'URL of the pull request for identifying for which QA environment should be deployed.'
+        required: true
+
+permissions:
+  issues: write
+  id-token: write
+  contents: read
+  pull-requests: write
+
 
 jobs:
-  qa-deploy-command:
+  check-migrations:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Switch to PR's branch
+      id: checkout_branch
+      run: |
+        PR_URL="${{ github.event.inputs.pull_request_url }}"
+        PR_NUMBER=$(echo "$PR_URL" | awk -F '/' '{print $NF}')
+        BRANCH_NAME=$(gh pr view $PR_NUMBER --json headRefName -q .headRefName)
+        echo "pull_request_number=$PR_NUMBER" >> $GITHUB_OUTPUT
+        echo "branch_name=$BRANCH_NAME" >> $GITHUB_OUTPUT
+        git checkout $BRANCH_NAME
+        exit 1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  add-reaction:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Add reaction to the comment
+        uses: peter-evans/create-or-update-comment@v4
         with:
-          token: ${{ secrets.PAT }}
-          repository: ${{ github.event.client_payload.pull_request.head.repo.full_name }}
-          ref: ${{ github.event.client_payload.pull_request.head.ref }}
-
-      - name: Check for changes in migrations
-        run: |
-          changed_files=$(gh pr diff --name-only)
-          if echo "$changed_files" | grep -q '^src/migrations/'; then
-            echo "Changes detected in migrations. Exiting workflow."
-            # exit 1  # Exit with failure status
-          fi
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  
-      - name: Get Pull Request Number
-        id: pr
-        run: echo "pull_request_number=$(gh pr view --json number -q .number)" >> $GITHUB_OUTPUT
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  
-      - name: Set Version
-        id: set-version
-        run: |
-          echo "version=qa-${{ steps.pr.outputs.pull_request_number }}" >> $GITHUB_OUTPUT
-  
-      - name: Set short git commit SHA
-        id: commit-sha
-        uses: prompt/actions-commit-hash@v2
-
-      - name: Print version
-        run: |
-          echo "Version set: ${{ steps.set-version.outputs.version }}"
-
-      - name: Print commit SHA
-        run: |
-          echo "Commit SHA: ${{ steps.commit-sha.outputs.hash }}"
+          comment-id: ${{ github.event.inputs.comment_id }}
+          reactions: hooray
