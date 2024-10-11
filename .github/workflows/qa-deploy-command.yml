@@ -4,11 +4,13 @@ on:
   workflow_dispatch:
     inputs:
       pull_request_url:
-        description: 'URL of the pull request for identifying for which QA environment should be deployed.'
+        description: 'URL of the pull request to identify which QA environment should be deployed.'
         required: true
       comment_id:
-        description: 'URL of the pull request for identifying for which QA environment should be deployed.'
+        description: 'ID of the comment to add reactions to.'
         required: true
+  pull_request:
+    types: [closed]     
 
 permissions:
   issues: write
@@ -16,34 +18,35 @@ permissions:
   contents: read
   pull-requests: write
 
-
 jobs:
   check-migrations:
     runs-on: ubuntu-latest
     steps:
-    - name: Checkout
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
+      - name: Switch to PR's branch
+        id: checkout_branch
+        run: |
+          exit 0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Switch to PR's branch
-      id: checkout_branch
-      run: |
-        PR_URL="${{ github.event.inputs.pull_request_url }}"
-        PR_NUMBER=$(echo "$PR_URL" | awk -F '/' '{print $NF}')
-        BRANCH_NAME=$(gh pr view $PR_NUMBER --json headRefName -q .headRefName)
-        echo "pull_request_number=$PR_NUMBER" >> $GITHUB_OUTPUT
-        echo "branch_name=$BRANCH_NAME" >> $GITHUB_OUTPUT
-        git checkout $BRANCH_NAME
-        exit 1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  add-reaction:
+  add-success-reaction:
+    needs: check-migrations
     runs-on: ubuntu-latest
+    if: github.event.inputs.comment_id
     steps:
-      - name: Add reaction to the comment
+      - name: Add success reaction to the comment
         uses: peter-evans/create-or-update-comment@v4
         with:
           comment-id: ${{ github.event.inputs.comment_id }}
           reactions: hooray
+
+  add-failure-reaction:
+    needs: check-migrations
+    if: failure()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Add failure reaction to the comment
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          comment-id: ${{ github.event.inputs.comment_id }}
+          reactions: -1
