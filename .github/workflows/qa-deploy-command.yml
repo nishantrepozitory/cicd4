@@ -1,52 +1,58 @@
-name: Deploy QA Environment
-
+name: lint
 on:
-  workflow_dispatch:
-    inputs:
-      pull_request_url:
-        description: 'URL of the pull request to identify which QA environment should be deployed.'
-        required: true
-      comment_id:
-        description: 'ID of the comment to add reactions to.'
-        required: true
   pull_request:
-    types: [closed]     
+    types: [opened, edited, synchronize, reopened, ready_for_review]
+  push:
+    branches:
+      - main
+      - develop
 
 permissions:
-  issues: write
-  id-token: write
   contents: read
-  pull-requests: write
+  pull-requests: read
+  checks: write
 
 jobs:
-  check-migrations:
+  check-go-files:
+    name: Check if .go files were modified
     runs-on: ubuntu-latest
+    outputs:
+      go_files_modified: ${{ steps.check-go-files.outputs.go_files_modified }}
     steps:
-      - name: Switch to PR's branch
-        id: checkout_branch
+      - uses: actions/checkout@v4
+
+      - name: Check for modified .go files
+        id: check-go-files
         run: |
-          exit 0
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          git fetch --all
+          base_commit=$(jq -r .pull_request.base.sha $GITHUB_EVENT_PATH)
+          current_commit=$(jq -r .pull_request.head.sha $GITHUB_EVENT_PATH)
+          if git diff --name-only $base_commit $current_commit | grep '\.go$'; then
+            echo "Go files modified."
+            echo "go_files_modified=true" >> $GITHUB_OUTPUT
+          else
+            echo "No Go files modified."
+            echo "go_files_modified=false" >> $GITHUB_OUTPUT
+          fi
 
-  add-success-reaction:
-    needs: check-migrations
+  lint:
+    name: Run Lint if .go files were modified
     runs-on: ubuntu-latest
-    if: github.event.inputs.comment_id
+    needs: check-go-files
+    if: needs.check-go-files.outputs.go_files_modified == 'true'
     steps:
-      - name: Add success reaction to the comment
-        uses: peter-evans/create-or-update-comment@v4
-        with:
-          comment-id: ${{ github.event.inputs.comment_id }}
-          reactions: hooray
+      - name: Configure git to use GH_TOKEN
+        run: |
+          git config --global url."https://${{ secrets.PAT }}:@github.com/".insteadOf "https://github.com/"
+          git config --global url."git@github.com:".insteadOf "https://github.com/"
 
-  add-failure-reaction:
-    needs: check-migrations
-    if: failure()
-    runs-on: ubuntu-latest
-    steps:
-      - name: Add failure reaction to the comment
-        uses: peter-evans/create-or-update-comment@v4
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
         with:
-          comment-id: ${{ github.event.inputs.comment_id }}
-          reactions: -1
+          go-version: 1.22.6
+
+      - name: Lint
+        uses: golangci/golangci-lint-action@v6
+        with:
+          version: v1.58
