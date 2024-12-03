@@ -1,0 +1,40 @@
+name: Validate Kubernetes Batch Job Manifests
+
+on:
+  workflow_dispatch:
+    inputs:
+      path:
+        required: true
+        type: string
+      branch:
+        required: false
+        type: string
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ inputs.branch }}
+
+      - name: Validate batch-job manifest
+        run: |
+          files=$(find "${{ inputs.path }}" -name "*.yaml" -or -name "*.yml")
+            for file in $files; do
+              echo "validating $file..."
+              count=$(yq ea '[.] | length' "$file")
+              for i in $(seq 0 $((count - 1))); do
+                apiVersion=$(yq e "select(di == $i).apiVersion" "$file")
+                if [ "$apiVersion" = "batch/v1" ]; then
+                  istio_inject=$(yq e "select(di == $i).spec.jobTemplate.spec.template.metadata.labels.\"sidecar.istio.io/inject\"" "$file")
+                  if [ "$istio_inject" != "false" ]; then
+                  echo "❌ Validation failed for $file (manifest $i): Missing 'sidecar.istio.io/inject: false' label."
+                  exit 1
+                fi
+              fi
+            done
+          done
+          echo "✅ Validation success!"
