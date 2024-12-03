@@ -1,0 +1,247 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: sales-marker-server-batch
+  namespace: sales-marker-dev
+spec:
+  schedule: "0 * * * *" # every hour. This is temporary
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            sidecar.istio.io/inject: "false"
+        spec:
+          tolerations:
+            - key: arm64-only
+              operator: Equal
+              value: "true"
+              effect: NoSchedule
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: kubernetes.io/arch
+                        operator: In
+                        values:
+                          - arm64
+          containers:
+            - name: sales-marker-server-batch
+              image: DOCKER_IMAGE
+              envFrom:
+                - configMapRef:
+                    name: sales-marker-server
+          restartPolicy: Never
+      backoffLimit: 1
+
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: sequence-detect-and-add-new-company-batch
+  namespace: sales-marker-dev
+spec:
+  schedule: "0 17 * * *" # every day at 02:00 (JST) (17:00 UTC)
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            sidecar.istio.io/inject: "false"
+        spec:
+          tolerations:
+            - key: arm64-only
+              operator: Equal
+              value: "true"
+              effect: NoSchedule
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: kubernetes.io/arch
+                        operator: In
+                        values:
+                          - arm64
+          containers:
+            - name: sequence-detect-and-add-new-company-batch
+              image: DOCKER_IMAGE
+              command:
+                ["node", "./dist/batch/sequence/detectAndAddNewCompany.js"]
+              envFrom:
+                - configMapRef:
+                    name: sales-marker-server
+          restartPolicy: Never
+      backoffLimit: 1
+
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: sequence-check-qualifications-batch
+  namespace: sales-marker-dev
+spec:
+  schedule: "*/10 * * * *"
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            sidecar.istio.io/inject: "false"
+        spec:
+          tolerations:
+            - key: arm64-only
+              operator: Equal
+              value: "true"
+              effect: NoSchedule
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: kubernetes.io/arch
+                        operator: In
+                        values:
+                          - arm64
+          containers:
+            - name: sequence-check-qualificati-batch
+              image: DOCKER_IMAGE
+              command:
+                ["node", "./dist/batch/sequence/checkCompanyQualification.js"]
+              envFrom:
+                - configMapRef:
+                    name: sales-marker-server
+          restartPolicy: Never
+      backoffLimit: 1
+
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: processing-company-moving-batch
+  namespace: sales-marker-dev
+spec:
+  schedule: "5,15,25,35,45,55 * * * *"
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            sidecar.istio.io/inject: "false"
+        spec:
+          tolerations:
+            - key: arm64-only
+              operator: Equal
+              value: "true"
+              effect: NoSchedule
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: kubernetes.io/arch
+                        operator: In
+                        values:
+                          - arm64
+          containers:
+            - name: processing-company-moving-batch
+              image: DOCKER_IMAGE
+              command:
+                ["node", "./dist/batch/sequence/processingCompanyMoving.js"]
+              envFrom:
+                - configMapRef:
+                    name: sales-marker-server
+          restartPolicy: Never
+      backoffLimit: 1
+
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: sequence-create-approach-batch
+  namespace: sales-marker-dev
+spec:
+  schedule: "7,17,27,37,47,57 * * * *"
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            sidecar.istio.io/inject: "false"
+        spec:
+          tolerations:
+            - key: arm64-only
+              operator: Equal
+              value: "true"
+              effect: NoSchedule
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: kubernetes.io/arch
+                        operator: In
+                        values:
+                          - arm64
+          containers:
+            - name: sequence-create-approach-batch
+              image: DOCKER_IMAGE
+              command: ["node", "./dist/batch/sequence/createApproach.js"]
+              envFrom:
+                - configMapRef:
+                    name: sales-marker-server
+          restartPolicy: Never
+      backoffLimit: 1
+
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: update-industry-top-companies
+  namespace: sales-marker-dev
+spec:
+  schedule: "30 17 * * *" # every day at 02:30 (JST) (17:00 UTC)
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            sidecar.istio.io/inject: "false"
+        spec:
+          tolerations:
+            - key: arm64-only
+              operator: Equal
+              value: "true"
+              effect: NoSchedule
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: kubernetes.io/arch
+                        operator: In
+                        values:
+                          - arm64
+          containers:
+            - name: update-industry-top-companies-batch
+              image: DOCKER_IMAGE
+              command:
+                ["node", "./dist/batch/ranking/updateIndustryTopCompanies.js"]
+              envFrom:
+                - configMapRef:
+                    name: sales-marker-server
+          restartPolicy: Never
+      backoffLimit: 1
