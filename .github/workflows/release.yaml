@@ -1,0 +1,40 @@
+name: Test and Release
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Gateway Repository
+        uses: actions/checkout@v2
+        with:
+          repository: "nishantrepozitory/cicdtest"
+          token: ${{ secrets.PAT }}
+
+      - name: Get latest proto version
+        run: |
+          PROTO_VERSION="VERSION_123"
+          echo "PROTO_VERSION=${PROTO_VERSION}" >> $GITHUB_ENV
+
+      - name: Commit and push changes
+        run: |
+          touch "$(date '+%Y-%m-%d_%H-%M-%S').txt"
+
+      - name: Commit & Push changes
+        uses: actions-js/push@master
+        with:
+          github_token: ${{ secrets.PAT }}
+          message: "auto-release: update proto to abc"
+          branch: develop
+          repository: nishantrepozitory/cicdtest
+
+      - uses: convictional/trigger-workflow-and-wait@v1.6.1
+        with:
+          owner: nishantrepozitory
+          repo: cicdtest
+          github_token: ${{ secrets.PAT }}
+          workflow_file_name: deploy.yml
+          ref: develop
